@@ -1,4 +1,4 @@
-const CACHE = 'orbit-ssc-2027-shell-v1';
+const CACHE = 'orbit-ssc-2027-shell-v2';
 const SHELL = [
   './',
   './index.html',
