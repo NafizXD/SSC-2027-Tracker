@@ -7,6 +7,9 @@
      v1.3 → VIDEO LINK-UP: every chapter & topic without a video gets a
             topic-matched YouTube link (🎥); real URLs can be pinned via
             window.SSC_VIDEO_MAP in cloud-config.js
+     v1.4 → UI CLEANUP: update/guard info cards hidden by default (Settings
+            toggle to show), auth screen: Create Account first & primary,
+            "Sign In" renamed to "Log In"
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -104,6 +107,8 @@
   .upx-vcode { display: block; background: #1e293b; border-radius: 8px; padding: 8px 10px;
                font-family: ui-monospace, Consolas, monospace; font-size: 11px;
                color: #7dd3fc; margin: 8px 0; white-space: pre-wrap; }
+  .upx-set-row { display: flex; gap: 8px; align-items: center; font-size: 12.5px;
+                 margin: 6px 0; color: inherit; }
 </style>
 
 <!-- ==================== UPDATE 1.0 · update channel demo (test mode only) ==================== -->
@@ -748,8 +753,110 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.4 · paste the next section here ====================
-<section class="upx-section" data-version="1.4" id="update-1-4"> … </section>
+<!-- ==================== UPDATE 1.4 · UI CLEANUP ==================== -->
+<section class="upx-section" data-version="1.4" id="update-1-4">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.4</span>
+    <h2>UI Cleanup</h2>
+    <ul class="upx-glist">
+      <li>🙈 Update / syllabus-guard info cards are now <b>hidden by default</b>. Badges (🟢🟡) and 🎥 video links stay active.</li>
+      <li>⚙️ Want the cards back? <b>Settings → “Show syllabus guard &amp; update info cards”</b> toggle (saved per device).</li>
+      <li>🔐 Auth screen: <b>Create Account</b> is now the first &amp; default tab; “Sign In” is renamed <b>Log In</b>.</li>
+    </ul>
+    <p class="upx-stamp" id="upx-14-stamp"></p>
+  </div>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.4 · UI CLEANUP ---------- */
+  (function () {
+    'use strict';
+
+    var CARD_KEY = 'upxShowCards';
+    var TAB_KEY  = 'upxAuthTabChosen';
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4'];
+
+    function cardsWanted() {
+      try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
+    }
+    function syncCards() {
+      var show = cardsWanted();
+      CARD_IDS.forEach(function (id) {
+        var sec = document.getElementById(id);
+        if (sec) sec.style.display = show ? '' : 'none';
+      });
+      var stamp = document.getElementById('upx-14-stamp');
+      if (stamp) stamp.textContent = 'Cards ' + (show ? 'visible' : 'hidden') + ' · changed at ' + new Date().toLocaleString();
+    }
+
+    /* ---- settings toggle inside the app's own Settings dialog ---- */
+    function injectSetting() {
+      if (document.getElementById('upx-set-cards')) return;
+      var body = document.querySelector('#settings-form .dialog-body') || document.querySelector('.dialog-body');
+      if (!body) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'field';
+      wrap.innerHTML = '<label class="upx-set-row"><input type="checkbox" id="upx-set-cards"' + (cardsWanted() ? ' checked' : '') + '> Show syllabus guard &amp; update info cards (সিলেবাস গার্ড ও আপডেট কার্ড দেখুন)</label>';
+      body.appendChild(wrap);
+    }
+    if (typeof window.settingsDialog === 'function') {
+      var origSettings = window.settingsDialog;
+      window.settingsDialog = function () {
+        var r = origSettings.apply(this, arguments);
+        setTimeout(injectSetting, 0);
+        return r;
+      };
+    }
+    document.addEventListener('change', function (ev) {
+      if (ev.target && ev.target.id === 'upx-set-cards') {
+        try { localStorage.setItem(CARD_KEY, ev.target.checked ? '1' : '0'); } catch (e) {}
+        syncCards();
+      }
+    });
+
+    /* ---- auth screen: Create Account first + "Log In" wording ---- */
+    function tweakAuth() {
+      var tabIn = document.getElementById('auth-tab-signin');
+      var tabUp = document.getElementById('auth-tab-signup');
+      if (tabIn && tabIn.textContent.trim() === 'Sign In') tabIn.textContent = 'Log In';
+      var submit = document.querySelector('#auth-signin-form button[type="submit"]');
+      if (submit && submit.textContent.trim() === 'Sign In') submit.textContent = 'Log In';
+      var sub = document.querySelector('#auth-overlay .auth-subtitle');
+      if (sub && sub.textContent.indexOf('Sign in to continue') > -1) {
+        sub.textContent = 'Create an account — or log in — to save your study progress.';
+      }
+      if (tabUp && tabIn && tabUp.parentNode === tabIn.parentNode && tabIn.parentNode.firstChild === tabIn) {
+        tabIn.parentNode.insertBefore(tabUp, tabIn);   // Create Account first
+      }
+    }
+    function defaultToSignup() {
+      var chosen = false;
+      try { chosen = sessionStorage.getItem(TAB_KEY) === '1'; } catch (e) {}
+      if (chosen) return;
+      if (typeof window.authTab === 'function') { try { window.authTab('signup'); } catch (e) {} }
+    }
+    document.addEventListener('click', function (ev) {
+      var t = ev.target && ev.target.closest ? ev.target.closest('.auth-tab') : null;
+      if (t) { try { sessionStorage.setItem(TAB_KEY, '1'); } catch (e) {} }
+    }, true);
+
+    var overlay = document.getElementById('auth-overlay');
+    if (overlay && 'MutationObserver' in window) {
+      new MutationObserver(function () {
+        if (!overlay.hidden) { tweakAuth(); defaultToSignup(); }
+      }).observe(overlay, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
+    tweakAuth();
+    syncCards();
+    window.SSC_UI14 = { syncCards: syncCards, tweakAuth: tweakAuth };
+    console.info('[ui-cleanup] cards hidden by default; auth = Create Account first, Log In wording');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.5 · paste the next section here ====================
+<section class="upx-section" data-version="1.5" id="update-1-5"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52be1a83b65c0e0',t:'MTc5MzM3ODYzMg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52be1a83b65c0e0',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
