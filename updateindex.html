@@ -14,6 +14,9 @@
             ── Create Account (selected) ── Log In ──
      v1.6 → Create Account = PRIMARY filled button (top),
             Log In = SECONDARY ghost button, no background (below)
+     v1.7 → BUGFIX: reorder check used firstChild (whitespace text node) so
+            Create Account never moved to top; default-tab switch missed the
+            overlay's first show. Now fixed at boot with firstElementChild.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -788,7 +791,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -918,9 +921,57 @@
   </div>
 </section>
 
-<!-- ==================== UPDATE 1.7 · paste the next section here ====================
-<section class="upx-section" data-version="1.7" id="update-1-7"> … </section>
+<!-- ==================== UPDATE 1.7 · AUTH ORDER/DEFAULT BUGFIX ==================== -->
+<section class="upx-section" data-version="1.7" id="update-1-7">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.7</span>
+    <h2>Auth order bugfix</h2>
+    <ul class="upx-glist">
+      <li>Create Account now really moves to the TOP (firstElementChild check).</li>
+      <li>Create Account form is selected on the overlay's FIRST show too (boot-time fix, not only on later shows).</li>
+    </ul>
+    <p class="upx-stamp">Applied at runtime from the update pack.</p>
+  </div>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.7 · auth order / default-selection bugfix ---------- */
+  (function () {
+    'use strict';
+    function fix() {
+      var tabIn = document.getElementById('auth-tab-signin');
+      var tabUp = document.getElementById('auth-tab-signup');
+      /* put Create Account FIRST (whitespace-safe check) */
+      if (tabIn && tabUp && tabUp.parentNode === tabIn.parentNode &&
+          tabIn.parentNode.firstElementChild === tabIn) {
+        tabIn.parentNode.insertBefore(tabUp, tabIn);
+      }
+      /* default-select Create Account when the overlay is (or becomes) visible */
+      var chosen = false;
+      try { chosen = sessionStorage.getItem('upxAuthTabChosen') === '1'; } catch (e) {}
+      var overlay = document.getElementById('auth-overlay');
+      var loggedOut = false;
+      var fb = document.getElementById('auth-feedback');
+      if (fb && fb.textContent.indexOf('logged out') > -1) loggedOut = true;
+      if (!chosen && !loggedOut && typeof window.authTab === 'function' && overlay && !overlay.hidden) {
+        try { window.authTab('signup'); } catch (e) {}
+      }
+    }
+    fix();                                   /* boot-time: overlay may already be visible */
+    var overlay = document.getElementById('auth-overlay');
+    if (overlay && 'MutationObserver' in window) {
+      new MutationObserver(function () {
+        if (!overlay.hidden) fix();          /* every later show as well */
+      }).observe(overlay, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    window.SSC_AUTH17 = { fix: fix };
+    console.info('[auth-fix] Create Account = top + default selection enforced');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.8 · paste the next section here ====================
+<section class="upx-section" data-version="1.8" id="update-1-8"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52bf3b8fef87e63',t:'MTc5MzM3OTM3Mg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52bf3b8fef87e63',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52bfc65b9ff7ccd',t:'MTc5MzM3OTcyOA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52bfc65b9ff7ccd',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
