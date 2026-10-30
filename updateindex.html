@@ -4,6 +4,9 @@
      v1.0 → update channel demo (now visible ONLY in admin test mode)
      v1.1 → ADMIN VIEW (no-login test mode / hidden production diagnostics)
      v1.2 → SYLLABUS GUARD & EXAM INDICATOR
+     v1.3 → VIDEO LINK-UP: every chapter & topic without a video gets a
+            topic-matched YouTube link (🎥); real URLs can be pinned via
+            window.SSC_VIDEO_MAP in cloud-config.js
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -92,6 +95,15 @@
   .upx-match td { padding: 3.5px 6px; border-bottom: 1px dashed #1e293b; color: #cbd5e1;
                   vertical-align: top; }
   .upx-match td:first-child { color: #93c5fd; white-space: nowrap; }
+
+  /* ---------- VIDEO LINK-UP (v1.3) ---------- */
+  .upx-tvid { margin-left: 7px; font-size: 11px; text-decoration: none; opacity: .8;
+              vertical-align: middle; }
+  .upx-tvid:hover { opacity: 1; }
+  .chapter-video-link + .chapter-video-link { margin-left: 8px; }
+  .upx-vcode { display: block; background: #1e293b; border-radius: 8px; padding: 8px 10px;
+               font-family: ui-monospace, Consolas, monospace; font-size: 11px;
+               color: #7dd3fc; margin: 8px 0; white-space: pre-wrap; }
 </style>
 
 <!-- ==================== UPDATE 1.0 · update channel demo (test mode only) ==================== -->
@@ -592,9 +604,152 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.3 · paste the next section here ====================
-<section class="upx-section" data-version="1.3" id="update-1-3"> … </section>
+<!-- ==================== UPDATE 1.3 · VIDEO LINK-UP ==================== -->
+<section class="upx-section" data-version="1.3" id="update-1-3">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.3</span>
+    <h2>Video Link-Up 🎥</h2>
+    <p>
+      Every chapter and topic that had <b>no video link</b> now gets one that
+      <b>matches the website's topic exactly</b>:
+    </p>
+    <ul class="upx-glist">
+      <li>🎥 next to a topic = topic-matched YouTube link for that exact topic</li>
+      <li><b>অধ্যায়ের ভিডিও</b> button on a chapter = chapter-matched YouTube link (Bangla/English query as per subject)</li>
+      <li><b>SSC প্লেলিস্ট</b> = the subject playlist (as before)</li>
+      <li><b>সরাসরি ভিডিও</b> = a hand-pinned real video URL (see below)</li>
+    </ul>
+    <p>Pin real video URLs any time from <code>cloud-config.js</code>:</p>
+    <code class="upx-vcode">window.SSC_VIDEO_MAP = {
+  'bangla-1::সুভা': 'https://www.youtube.com/watch?v=XXXX',
+  'physics::গতি::বেগ ও দ্রুতি': 'https://www.youtube.com/watch?v=YYYY'
+};</code>
+    <p class="upx-stamp" id="upx-video-stamp"></p>
+  </div>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.3 · VIDEO LINK-UP ---------- */
+  (function () {
+    'use strict';
+
+    var EXTRA = (typeof window.SSC_VIDEO_MAP === 'object' && window.SSC_VIDEO_MAP) ? window.SSC_VIDEO_MAP : {};
+    var stats = { chaptersWithout: 0, topicsWithout: 0, topicLinks: 0, pinned: 0 };
+
+    /* ---- indexes from app DATA ---- */
+    var SUBJ = {}, CIDX = {}, TIDX = {};
+    if (typeof DATA !== 'undefined' && Array.isArray(DATA)) {
+      DATA.forEach(function (s) {
+        SUBJ[s.id] = { bn: s.bn || '', name: s.name || '' };
+        (s.chapters || []).forEach(function (c) {
+          CIDX[c.id] = { title: c.title, bn: c.bn || '', sid: s.id };
+          var has = false;
+          (c.topics || []).forEach(function (t) {
+            TIDX[t.id] = { title: t.title, video: !!t.video, cid: c.id };
+            if (t.video) has = true;
+          });
+          if (!has) stats.chaptersWithout++;
+        });
+      });
+      Object.keys(TIDX).forEach(function (id) { if (!TIDX[id].video) stats.topicsWithout++; });
+    }
+
+    function sidOf(c) {
+      return (c.subject && c.subject.id) || String(c.id).split('-').slice(0, -1).join('-');
+    }
+    function key(sid, chapterTitle, topicTitle) {
+      return topicTitle ? sid + '::' + chapterTitle + '::' + topicTitle : sid + '::' + chapterTitle;
+    }
+    function searchUrl(title, extra) {
+      return 'https://www.youtube.com/results?search_query=' + encodeURIComponent((title + ' ' + extra).trim());
+    }
+    function pinnedChapter(c) { return EXTRA[key(sidOf(c), c.title)] || ''; }
+
+    /* ---- replace the app's chapter video markup (honest labels, always a link) ---- */
+    if (typeof window.chapterVideoMarkup === 'function') {
+      window.chapterVideoMarkup = function (c) {
+        var sid = sidOf(c);
+        var subj = SUBJ[sid] || { bn: '', name: '' };
+        var directTopic = (c.topics || []).filter(function (t) { return t.video; })[0];
+        var direct = directTopic ? directTopic.video : pinnedChapter(c);
+        var out = '';
+        if (direct) {
+          out += '<a class="chapter-video-link" href="' + direct + '" target="_blank" rel="noopener noreferrer" title="এই অধ্যায়ের জন্য পিন করা সরাসরি ভিডিও">🎬 সরাসরি ভিডিও</a>';
+        } else {
+          out += '<a class="chapter-video-link" href="' + searchUrl(c.bn || c.title, 'SSC ' + subj.bn + ' ' + subj.name) + '" target="_blank" rel="noopener noreferrer" title="এই অধ্যায়ের সাথে মিলে যায় এমন ভিডিও খুঁজুন">🎥 অধ্যায়ের ভিডিও</a>';
+        }
+        var pl = (typeof SSC_PLAYLISTS !== 'undefined' && SSC_PLAYLISTS[sid]) || '';
+        if (pl) out += '<a class="chapter-video-link" href="' + pl + '" target="_blank" rel="noopener noreferrer" title="নবম-দশম শ্রেণির SSC বিষয়ভিত্তিক প্লেলিস্ট">SSC প্লেলিস্ট</a>';
+        return out;
+      };
+      if (typeof render === 'function') { try { render(true); } catch (e) {} }
+    }
+
+    /* ---- 🎥 icon on every topic that has no video ---- */
+    function scanTopics() {
+      var items = document.querySelectorAll('.topic-item');
+      [].forEach.call(items, function (item) {
+        if (item.dataset.upxVid) return;
+        item.dataset.upxVid = '1';
+        var inp = item.querySelector('input[data-topic]');
+        if (!inp) return;
+        var rec = TIDX[inp.getAttribute('data-topic')];
+        if (!rec || rec.video) return;
+        var ch = CIDX[rec.cid];
+        if (!ch) return;
+        var url = EXTRA[key(ch.sid, ch.title, rec.title)] || searchUrl(rec.title, (ch.bn || ch.title) + ' SSC ' + (SUBJ[ch.sid] ? SUBJ[ch.sid].bn : ''));
+        if (EXTRA[key(ch.sid, ch.title, rec.title)]) stats.pinned++;
+        var a = document.createElement('a');
+        a.className = 'upx-tvid';
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.title = 'ভিডিও দেখুন: ' + rec.title;
+        a.setAttribute('aria-label', 'ভিডিও দেখুন: ' + rec.title);
+        a.textContent = '🎥';
+        var span = item.querySelector('.topic-text');
+        if (span && span.parentNode) span.parentNode.insertBefore(a, span.nextSibling);
+        else item.appendChild(a);
+        stats.topicLinks++;
+        updateRow();
+      });
+    }
+
+    function updateRow() {
+      var row = document.getElementById('upx-video-row');
+      if (row) row.textContent = stats.topicLinks + ' topic links · ' + stats.chaptersWithout + ' chapters covered';
+      var stamp = document.getElementById('upx-video-stamp');
+      if (stamp) stamp.textContent = 'Link-up at ' + new Date().toLocaleString() + ' · ' + stats.topicsWithout + ' topics & ' + stats.chaptersWithout + ' chapters had no video — all linked now';
+    }
+    function addAdminRow() {
+      var body = document.querySelector('#upx-admin .upx-admin-body');
+      var actions = document.querySelector('#upx-admin .upx-admin-actions');
+      if (!body || !actions || document.getElementById('upx-video-row')) return;
+      var row = document.createElement('div');
+      row.className = 'upx-row';
+      row.innerHTML = '<span>Video link-up</span><b id="upx-video-row" class="upx-ok"></b>';
+      body.insertBefore(row, actions);
+      updateRow();
+    }
+
+    addAdminRow();
+    scanTopics();
+    updateRow();
+    if ('MutationObserver' in window) {
+      var t = null;
+      new MutationObserver(function () {
+        clearTimeout(t);
+        t = setTimeout(scanTopics, 220);
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+    document.addEventListener('updates:loaded', scanTopics);
+    window.SSC_VIDEOS = { stats: stats, rescan: scanTopics, searchUrl: searchUrl };
+    console.info('[video-link-up] topics without video:', stats.topicsWithout, '· chapters without:', stats.chaptersWithout);
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.4 · paste the next section here ====================
+<section class="upx-section" data-version="1.4" id="update-1-4"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52af428ccf825b1',t:'MTc5MzM2ODkwNQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52af428ccf825b1',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
