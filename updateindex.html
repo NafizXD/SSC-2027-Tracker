@@ -12,6 +12,8 @@
             "Sign In" renamed to "Log In"
      v1.5 → auth tabs become a VERTICAL list with divider lines:
             ── Create Account (selected) ── Log In ──
+     v1.6 → Create Account = PRIMARY filled button (top),
+            Log In = SECONDARY ghost button, no background (below)
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -786,7 +788,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -882,9 +884,43 @@
   </div>
 </section>
 
-<!-- ==================== UPDATE 1.6 · paste the next section here ====================
-<section class="upx-section" data-version="1.6" id="update-1-6"> … </section>
+<!-- ==================== UPDATE 1.6 · PRIMARY / SECONDARY AUTH BUTTONS ==================== -->
+<style>
+  /* ---- auth buttons: primary filled + secondary ghost (v1.6) ---- */
+  #auth-overlay .auth-tabs { display: flex; flex-direction: column; gap: 10px;
+                             padding: 0; background: transparent; border: 0;
+                             border-radius: 0; margin-bottom: 18px; }
+  #auth-overlay .auth-tab  { padding: 12px 10px; border-radius: 9px; font-size: 12px;
+                             font-weight: 600; text-align: center; border: 0; }
+  #auth-overlay .auth-tab:last-child { border-bottom: 0; }
+  /* PRIMARY — Create Account: filled, same language as the app's .button */
+  #auth-overlay #auth-tab-signup { background: var(--accent); color: #fff;
+                                   border: 1px solid var(--accent); font-weight: 700; }
+  #auth-overlay #auth-tab-signup:hover { background: var(--accent-hover);
+                                         border-color: var(--accent-hover); }
+  #auth-overlay #auth-tab-signup.active { box-shadow: var(--ring); }
+  /* SECONDARY — Log In: ghost, NO background colour */
+  #auth-overlay #auth-tab-signin { background: transparent; color: var(--muted);
+                                   border: 1px solid var(--line); }
+  #auth-overlay #auth-tab-signin:hover { color: var(--text); border-color: var(--subtle); }
+  #auth-overlay #auth-tab-signin.active { color: var(--accent); border-color: var(--accent);
+                                          background: transparent; }
+</style>
+<section class="upx-section" data-version="1.6" id="update-1-6">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.6</span>
+    <h2>Auth buttons: primary &amp; secondary</h2>
+    <ul class="upx-glist">
+      <li><b>Create Account</b> = primary filled button (top, default selected)</li>
+      <li><b>Log In</b> = secondary ghost button — no background colour</li>
+    </ul>
+    <p class="upx-stamp">Styled at runtime from the update pack.</p>
+  </div>
+</section>
+
+<!-- ==================== UPDATE 1.7 · paste the next section here ====================
+<section class="upx-section" data-version="1.7" id="update-1-7"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52bec6faa7b92bc',t:'MTc5MzM3OTA3NA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52bec6faa7b92bc',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52bf3b8fef87e63',t:'MTc5MzM3OTM3Mg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52bf3b8fef87e63',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
