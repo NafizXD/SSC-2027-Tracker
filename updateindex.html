@@ -17,6 +17,9 @@
      v1.7 → BUGFIX: reorder check used firstChild (whitespace text node) so
             Create Account never moved to top; default-tab switch missed the
             overlay's first show. Now fixed at boot with firstElementChild.
+     v1.8 → FORCE the CREATE ACCOUNT form as the very first view (direct DOM,
+            retry-safe, intercepts any code flipping back to login; logout
+            still opens Log In).
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -791,7 +794,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -969,9 +972,90 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.8 · paste the next section here ====================
-<section class="upx-section" data-version="1.8" id="update-1-8"> … </section>
+<!-- ==================== UPDATE 1.8 · CREATE ACCOUNT = FIRST VIEW ==================== -->
+<section class="upx-section" data-version="1.8" id="update-1-8">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.8</span>
+    <h2>Create Account = the first thing visitors see</h2>
+    <ul class="upx-glist">
+      <li>The overlay now opens with the <b>Create Account form</b> (email + username + password), not the login form.</li>
+      <li>Any app code that tries to flip back to the login form is intercepted while the visitor hasn't chosen a tab.</li>
+      <li>After <b>logout</b> the overlay correctly opens on Log In.</li>
+      <li>Visitor taps a tab manually → their choice wins for the session.</li>
+    </ul>
+    <p class="upx-stamp">Enforced at runtime from the update pack.</p>
+  </div>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.8 · force Create Account form as first view ---------- */
+  (function () {
+    'use strict';
+    var LOGOUT_KEY = 'upxLogoutPending';
+
+    function chosen() { try { return sessionStorage.getItem('upxAuthTabChosen') === '1'; } catch (e) { return false; } }
+    function logoutPending() { try { return sessionStorage.getItem(LOGOUT_KEY) === '1'; } catch (e) { return false; } }
+
+    /* Direct DOM selection — does not depend on the app's authTab() or timing. */
+    function selectSignup() {
+      if (chosen() || logoutPending()) return;
+      var si = document.getElementById('auth-signin-form');
+      var su = document.getElementById('auth-signup-form');
+      var ti = document.getElementById('auth-tab-signin');
+      var tu = document.getElementById('auth-tab-signup');
+      if (!si || !su) return;
+      si.hidden = true;
+      su.hidden = false;
+      if (ti) { ti.classList.remove('active'); ti.setAttribute('aria-selected', 'false'); }
+      if (tu) { tu.classList.add('active'); tu.setAttribute('aria-selected', 'true'); }
+    }
+    function reorder() {
+      var ti = document.getElementById('auth-tab-signin');
+      var tu = document.getElementById('auth-tab-signup');
+      if (ti && tu && ti.parentNode === tu.parentNode && ti.parentNode.firstElementChild === ti) {
+        ti.parentNode.insertBefore(tu, ti);
+      }
+    }
+    function apply() { reorder(); selectSignup(); }
+
+    apply();                                            /* boot */
+    [250, 700, 1500].forEach(function (ms) { setTimeout(apply, ms); });   /* beat late resets */
+    window.addEventListener('load', apply);
+    var ov = document.getElementById('auth-overlay');
+    if (ov && 'MutationObserver' in window) {
+      new MutationObserver(function () { if (!ov.hidden) apply(); }).observe(ov, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
+    /* remember manual tab choice + mark logout clicks */
+    document.addEventListener('click', function (ev) {
+      var t = ev.target && ev.target.closest ? ev.target.closest('[data-action="logout"],[data-action="cloud-signout"],.auth-tab') : null;
+      if (!t) return;
+      try {
+        if (t.classList.contains('auth-tab')) sessionStorage.setItem('upxAuthTabChosen', '1');
+        else sessionStorage.setItem(LOGOUT_KEY, '1');
+      } catch (e) {}
+    }, true);
+
+    /* intercept programmatic flips to the login form (except right after logout) */
+    if (typeof window.authTab === 'function') {
+      var orig = window.authTab;
+      window.authTab = function (tab) {
+        if (tab === 'signin' && !chosen()) {
+          if (logoutPending()) { try { sessionStorage.removeItem(LOGOUT_KEY); } catch (e) {} }
+          else { try { return orig.call(this, 'signup'); } catch (e) {} }
+        }
+        return orig.apply(this, arguments);
+      };
+    }
+
+    window.SSC_AUTH18 = { apply: apply, selectSignup: selectSignup };
+    console.info('[auth-1.8] Create Account form forced as the first view');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.9 · paste the next section here ====================
+<section class="upx-section" data-version="1.9" id="update-1-9"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52bfc65b9ff7ccd',t:'MTc5MzM3OTcyOA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52bfc65b9ff7ccd',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52c071579e01e99',t:'MTc5MzM4MDE2NQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52c071579e01e99',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
