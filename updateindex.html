@@ -1,21 +1,17 @@
 <!-- ======================================================================
-     updateindex.html · SSC Tracker · update pack v1.1
+     updateindex.html · SSC Tracker · update pack v1.2
      ----------------------------------------------------------------------
-     This file is FETCHED by index.html through update-loader.js.
-     It is a FRAGMENT PACK: every new feature / section / fix lives here,
-     so index.html never needs a full rewrite again.
-
-     v1.0 → update channel demo section
-     v1.1 → ADMIN VIEW: no-login test mode when the database is NOT
-            connected; completely invisible to the public when it IS
-            connected (admin access then only via ?admin=1 + passcode).
-
-     RULES FOR EVERY FUTURE UPDATE (v1.2, …)
-       1. Add one new block:  <section class="upx-section" data-version="1.2"> … </section>
-       2. Put its CSS in a <style> block  (the loader moves it into <head>).
-       3. Put its JS in a <script> block  (the loader re-executes it).
-       4. Prefix all class names with "upx-" so they never clash with index.html.
-       5. Never add <html> / <head> / <body> wrappers here.
+     v1.0 → update channel demo (now visible ONLY in admin test mode)
+     v1.1 → ADMIN VIEW (no-login test mode / hidden production diagnostics)
+     v1.2 → SYLLABUS GUARD & EXAM INDICATOR
+            • verifies app DATA against the NCTB book contents you OCR'd
+            • auto-fixes wrong titles/authors + inserts the missing poem
+              (রানার) at runtime — index.html still never rewritten
+            • badges every chapter:  IMPORTANT / LOW CHANCE / NOT IN EXAM
+            • public reference panel with red-list, rotating-composition
+              list, fix log and per-subject match table
+     Override the meta anytime from cloud-config.js:
+        window.SSC_EXAM_META = [ ['bangla-1','সুভা','high','my note'], … ];
      ====================================================================== -->
 
 <style>
@@ -76,9 +72,29 @@
               box-shadow: 0 6px 18px rgba(0, 0, 0, .45); }
   .upx-chip-live { background: #f59e0b; color: #451a03; }
   .upx-chip[hidden] { display: none; }
+
+  /* ---------- EXAM INDICATOR flags + guard panel (v1.2) ---------- */
+  .upx-flag { display: inline-block; font: 700 9.5px/1 system-ui, sans-serif;
+              letter-spacing: .06em; padding: 3px 7px; border-radius: 999px;
+              vertical-align: middle; margin-left: 6px; white-space: nowrap; }
+  .upx-flag-high { background: #16a34a; color: #052e16; }
+  .upx-flag-low  { background: #f59e0b; color: #451a03; }
+  .upx-flag-no   { background: #dc2626; color: #ffffff; }
+  .upx-legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+                font-size: 11.5px; color: #94a3b8; }
+  .upx-legend .upx-flag { margin-left: 0; }
+  .upx-ghead { margin: 14px 0 4px; font-size: 11px; letter-spacing: .08em;
+               color: #93c5fd; text-transform: uppercase; font-weight: 700; }
+  .upx-glist { margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: #cbd5e1; }
+  .upx-glist li { padding: 3.5px 0; border-bottom: 1px dashed #1e293b; }
+  .upx-glist li small { color: #64748b; }
+  .upx-match { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 4px; }
+  .upx-match td { padding: 3.5px 6px; border-bottom: 1px dashed #1e293b; color: #cbd5e1;
+                  vertical-align: top; }
+  .upx-match td:first-child { color: #93c5fd; white-space: nowrap; }
 </style>
 
-<!-- ==================== UPDATE 1.0 · update channel demo ==================== -->
+<!-- ==================== UPDATE 1.0 · update channel demo (test mode only) ==================== -->
 <section class="upx-section" data-version="1.0" id="update-1-0">
   <div class="upx-card">
     <span class="upx-badge">UPDATE 1.0</span>
@@ -86,7 +102,7 @@
     <p>
       This card was fetched from <code>updateindex.html</code> and injected into
       <code>index.html</code> at runtime &mdash; no full-file rewrite needed.
-      Every future feature (1.1, 1.2, &hellip;) appears above or below this one.
+      Since pack 1.2 it only shows in ADMIN TEST MODE.
     </p>
     <p class="upx-stamp" data-stamp>Loading time: &mdash;</p>
     <button type="button" class="upx-btn" data-ping>Ping the update channel</button>
@@ -124,8 +140,23 @@
   <button type="button" class="upx-chip" id="upx-chip" hidden>ADMIN</button>
 </section>
 
+<!-- ==================== UPDATE 1.2 · SYLLABUS GUARD & EXAM INDICATOR ==================== -->
+<section class="upx-section" data-version="1.2" id="update-1-2">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.2</span>
+    <h2>Syllabus Guard &amp; Exam Indicator</h2>
+    <p class="upx-legend">
+      <span class="upx-flag upx-flag-high">IMPORTANT</span> board exam e ashte pare — prioriry diin
+      <span class="upx-flag upx-flag-low">LOW CHANCE</span> MCQ only / borolekha ase na
+      <span class="upx-flag upx-flag-no">NOT IN EXAM</span> content-only — exam e ase na
+    </p>
+    <div id="upx-guard-lists"></div>
+    <p class="upx-stamp" id="upx-guard-stamp"></p>
+  </div>
+</section>
+
 <script>
-  /* ---------- UPDATE 1.0 logic (proves scripts run after injection) ---------- */
+  /* ---------- UPDATE 1.0 logic ---------- */
   (function () {
     var section = document.getElementById('update-1-0');
     if (!section) return;
@@ -144,21 +175,12 @@
   /* ---------- UPDATE 1.1 · ADMIN VIEW logic ---------- */
   (function () {
     'use strict';
-
     var PASSCODE = window.SSC_ADMIN_PASSCODE || 'ssc-admin-2027';
     var APP_KEY  = 'orbit-ssc-2027-v1';
     var params   = new URLSearchParams(location.search);
     var wantAdmin = params.has('admin') || location.hash.indexOf('admin') > -1;
-
-    var state = {
-      configured: !!window.SSC_DB_CONFIGURED,
-      reachable: null,          // null = not probed yet
-      probeMs: null,
-      probeDetail: '',
-      mode: 'pending'           // 'test' | 'live'
-    };
-    var authPause = false;      // true while admin temporarily wants the sign-in overlay
-
+    var state = { configured: !!window.SSC_DB_CONFIGURED, reachable: null, probeMs: null, probeDetail: '', mode: 'pending' };
+    var authPause = false;
     function el(id) { return document.getElementById(id); }
     function now() { return new Date().toLocaleTimeString(); }
     function log(msg) {
@@ -173,52 +195,30 @@
       node.textContent = text;
       node.className = cls || 'upx-info';
     }
-
-    /* Lightweight reachability probe: any HTTP answer from the Supabase host
-       means "connected"; a network failure means "not connected". */
     function probe() {
       var cfg = window.ORBIT_CLOUD_CONFIG;
-      if (!cfg || !cfg.supabaseUrl) {
-        return Promise.resolve({ reachable: false, ms: 0, detail: 'no supabaseUrl in cloud-config.js' });
-      }
+      if (!cfg || !cfg.supabaseUrl) return Promise.resolve({ reachable: false, ms: 0, detail: 'no supabaseUrl in cloud-config.js' });
       var t0 = performance.now();
       var ctrl = ('AbortController' in window) ? new AbortController() : null;
       var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 3500) : null;
-      return fetch(cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/', {
-        method: 'GET', cache: 'no-store', signal: ctrl ? ctrl.signal : undefined
-      }).then(function (r) {
-        clearTimeout(timer);
-        var ms = Math.round(performance.now() - t0);
-        return { reachable: true, ms: ms, detail: 'HTTP ' + r.status + ' in ' + ms + 'ms' };
-      }).catch(function (err) {
-        clearTimeout(timer);
-        var ms = Math.round(performance.now() - t0);
-        return { reachable: false, ms: ms, detail: (err && err.name === 'AbortError' ? 'timeout 3500ms' : String(err && err.message || err)) };
-      });
+      return fetch(cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/', { method: 'GET', cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+        .then(function (r) { clearTimeout(timer); var ms = Math.round(performance.now() - t0); return { reachable: true, ms: ms, detail: 'HTTP ' + r.status + ' in ' + ms + 'ms' }; })
+        .catch(function (err) { clearTimeout(timer); var ms = Math.round(performance.now() - t0); return { reachable: false, ms: ms, detail: (err && err.name === 'AbortError' ? 'timeout 3500ms' : String((err && err.message) || err)) }; });
     }
-
     function unlock() { if (window.SSC_ADMIN_UNLOCK) window.SSC_ADMIN_UNLOCK(); }
-
-    /* While in TEST mode, keep the sign-in overlay hidden even if app code
-       re-shows it later (e.g. a stray getSession rejection). */
     function watchOverlay() {
       var overlay = el('auth-overlay');
       if (!overlay || !('MutationObserver' in window)) return;
       new MutationObserver(function () {
-        if (state.mode === 'test' && !authPause && !overlay.hidden) {
-          unlock();
-          log('sign-in overlay re-appeared → hidden again (test mode)');
-        }
+        if (state.mode === 'test' && !authPause && !overlay.hidden) { unlock(); log('sign-in overlay re-appeared → hidden again (test mode)'); }
         refreshOverlayRow();
       }).observe(overlay, { attributes: true, attributeFilter: ['hidden'] });
     }
-
     function refreshOverlayRow() {
       var overlay = el('auth-overlay');
       if (!overlay) { set('upx-overlay', 'not found', 'upx-warn'); return; }
       set('upx-overlay', overlay.hidden ? 'hidden (unlocked)' : 'VISIBLE (locked)', overlay.hidden ? 'upx-ok' : 'upx-bad');
     }
-
     function refreshRows() {
       set('upx-mode', state.mode === 'test' ? 'TEST MODE — DB not connected' : 'PRODUCTION — DB live', state.mode === 'test' ? 'upx-ok' : 'upx-warn');
       set('upx-db-cfg', state.configured ? 'yes' : 'no', state.configured ? 'upx-ok' : 'upx-bad');
@@ -234,141 +234,81 @@
       set('upx-packs', packs.length ? packs.join(', ') : 'none', packs.length ? 'upx-ok' : 'upx-warn');
       refreshOverlayRow();
     }
-
     function showPanel() {
-      var panel = el('upx-admin');
-      var chip  = el('upx-chip');
-      var badge = el('upx-admin-badge');
-      var title = el('upx-admin-title');
+      var panel = el('upx-admin'), chip = el('upx-chip'), badge = el('upx-admin-badge'), title = el('upx-admin-title');
       if (!panel) return;
-      panel.hidden = false;
-      chip.hidden = true;
+      panel.hidden = false; chip.hidden = true;
       if (state.mode === 'test') {
-        badge.textContent = 'ADMIN TEST MODE';
-        badge.className = 'upx-badge upx-admin-badge-test';
-        title.textContent = 'DB not connected — no login needed';
-        chip.className = 'upx-chip';
+        badge.textContent = 'ADMIN TEST MODE'; badge.className = 'upx-badge upx-admin-badge-test';
+        title.textContent = 'DB not connected — no login needed'; chip.className = 'upx-chip';
       } else {
-        badge.textContent = 'ADMIN';
-        badge.className = 'upx-badge upx-admin-badge-live';
-        title.textContent = 'Production diagnostics';
-        chip.className = 'upx-chip upx-chip-live';
+        badge.textContent = 'ADMIN'; badge.className = 'upx-badge upx-admin-badge-live';
+        title.textContent = 'Production diagnostics'; chip.className = 'upx-chip upx-chip-live';
       }
       chip.textContent = state.mode === 'test' ? 'ADMIN TEST' : 'ADMIN';
       refreshRows();
     }
-
-    function hidePanel() {
-      var panel = el('upx-admin');
-      var chip  = el('upx-chip');
-      if (panel) panel.hidden = true;
-      if (chip) chip.hidden = false;
-    }
-
+    function hidePanel() { var p = el('upx-admin'), c = el('upx-chip'); if (p) p.hidden = true; if (c) c.hidden = false; }
     function exportDiagnostics() {
       var payload = {
-        exportedAt: new Date().toISOString(),
-        mode: state.mode,
-        dbConfigured: state.configured,
-        dbReachable: state.reachable,
-        probeDetail: state.probeDetail,
-        supabaseLib: !!(window.supabase && window.supabase.createClient),
-        online: navigator.onLine,
+        exportedAt: new Date().toISOString(), mode: state.mode,
+        dbConfigured: state.configured, dbReachable: state.reachable, probeDetail: state.probeDetail,
+        supabaseLib: !!(window.supabase && window.supabase.createClient), online: navigator.onLine,
         serviceWorker: ('serviceWorker' in navigator) ? !!navigator.serviceWorker.controller : false,
         updatePacks: [].map.call(document.querySelectorAll('#update-slot [data-version]'), function (s) { return s.getAttribute('data-version'); }),
-        localStorage: (function () {
-          try {
-            var out = {};
-            for (var i = 0; i < localStorage.length; i++) {
-              var k = localStorage.key(i);
-              if (k && k.indexOf('orbit-') === 0) out[k] = (localStorage.getItem(k) || '').length + ' bytes';
-            }
-            return out;
-          } catch (e) { return 'blocked'; }
-        })(),
+        syllabusGuard: window.SSC_GUARD ? { fixesApplied: window.SSC_GUARD.fixesApplied, badges: window.SSC_GUARD.badges } : 'not loaded',
         userAgent: navigator.userAgent
       };
       var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'ssc-admin-diagnostics-' + Date.now() + '.json';
-      document.body.appendChild(a);
-      a.click();
+      document.body.appendChild(a); a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
       log('diagnostics exported');
     }
-
     function wireButtons() {
       el('upx-admin-close').addEventListener('click', hidePanel);
       el('upx-chip').addEventListener('click', showPanel);
       el('upx-reprobe').addEventListener('click', function () {
-        log('re-probing database…');
-        set('upx-db-net', 'probing…', 'upx-info');
-        probe().then(function (r) {
-          state.reachable = r.reachable; state.probeMs = r.ms; state.probeDetail = r.detail;
-          log('probe: ' + r.detail);
-          refreshRows();
-        });
+        log('re-probing database…'); set('upx-db-net', 'probing…', 'upx-info');
+        probe().then(function (r) { state.reachable = r.reachable; state.probeMs = r.ms; state.probeDetail = r.detail; log('probe: ' + r.detail); refreshRows(); });
       });
       el('upx-toggle-auth').addEventListener('click', function () {
         authPause = !authPause;
         if (authPause) {
-          var overlay = el('auth-overlay');
-          if (overlay) overlay.hidden = false;
+          var overlay = el('auth-overlay'); if (overlay) overlay.hidden = false;
           log('sign-in overlay shown for 60s (test)');
-          setTimeout(function () {
-            authPause = false;
-            if (state.mode === 'test') unlock();
-            log('sign-in overlay auto-hidden again');
-            refreshOverlayRow();
-          }, 60000);
-        } else {
-          if (state.mode === 'test') unlock();
-          log('sign-in overlay hidden');
-        }
+          setTimeout(function () { authPause = false; if (state.mode === 'test') unlock(); log('sign-in overlay auto-hidden again'); refreshOverlayRow(); }, 60000);
+        } else { if (state.mode === 'test') unlock(); log('sign-in overlay hidden'); }
         refreshOverlayRow();
       });
       el('upx-demo').addEventListener('click', function () {
         if (typeof window.startDemo === 'function') { window.startDemo(); log('demo data started via app startDemo()'); }
-        else log('startDemo() not available in this build', 'upx-warn');
+        else log('startDemo() not available in this build');
       });
       el('upx-export').addEventListener('click', exportDiagnostics);
     }
-
     function boot() {
       var panel = el('upx-admin');
-      if (!panel) return;                       // pack markup missing → stay silent
-
+      if (!panel) return;
       if (!state.configured) {
-        /* Database not configured at all → TEST MODE, no login, no probe needed. */
-        state.mode = 'test';
-        state.reachable = false;
+        state.mode = 'test'; state.reachable = false;
         state.probeDetail = 'cloud-config.js missing/empty or supabase lib absent';
         window.SSC_ADMIN_TEST_MODE = true;
-        unlock();
-        watchOverlay();
-        wireButtons();
-        showPanel();
+        unlock(); watchOverlay(); wireButtons(); showPanel();
         log('admin TEST mode active — database not configured, no login required');
         return;
       }
-
-      /* Configured → probe reachability before deciding. */
       probe().then(function (r) {
         state.reachable = r.reachable; state.probeMs = r.ms; state.probeDetail = r.detail;
         if (!r.reachable) {
-          state.mode = 'test';
-          window.SSC_ADMIN_TEST_MODE = true;
-          unlock();
-          watchOverlay();
-          wireButtons();
-          showPanel();
+          state.mode = 'test'; window.SSC_ADMIN_TEST_MODE = true;
+          unlock(); watchOverlay(); wireButtons(); showPanel();
           log('admin TEST mode active — configured but unreachable: ' + r.detail);
           return;
         }
-        /* LIVE / production: invisible to the public. */
-        state.mode = 'live';
-        window.SSC_ADMIN_TEST_MODE = false;
+        state.mode = 'live'; window.SSC_ADMIN_TEST_MODE = false;
         wireButtons();
         var allowed = false;
         if (wantAdmin) {
@@ -382,17 +322,279 @@
         else { log('production mode — admin view hidden from public'); }
       });
     }
-
     window.SSC_ADMIN = { state: state, probe: probe, show: showPanel, hide: hidePanel };
     boot();
   })();
+
+  /* ---------- UPDATE 1.2 · SYLLABUS GUARD & EXAM INDICATOR ---------- */
+  (function () {
+    'use strict';
+
+    /* [subjectId, exact chapter/topic title, tier, note]
+       tier: 'high' = IMPORTANT (exam e ashte pare), 'low' = LOW CHANCE, 'no' = NOT IN EXAM */
+    var DEFAULT_META = [
+      /* ---- Bangla 1st · prose ---- */
+      ['bangla-1', 'উদ্যম ও পরিশ্রম', 'no', 'board exam e ase na — content-only reading (user confirmed)'],
+      ['bangla-1', 'জীবনে শিল্পের স্থান', 'no', 'board exam e ase na — content-only reading (user confirmed)'],
+      ['bangla-1', 'শিক্ষা ও মনুষ্যত্ব', 'no', 'board exam e ase na — content-only reading (user confirmed)'],
+      ['bangla-1', 'প্রত্যুপকার', 'high', 'CQ + MCQ both — classic board piece'],
+      ['bangla-1', 'ফুলের বিবাহ', 'high', 'CQ + MCQ both'],
+      ['bangla-1', 'সুভা', 'high', 'very frequent CQ'],
+      ['bangla-1', 'লাইব্রেরি', 'low', 'MCQ sombhob, CQ te kom'],
+      ['bangla-1', 'বই পড়া', 'high', 'frequent CQ'],
+      ['bangla-1', 'অভাগীর স্বর্গ', 'high', 'very frequent CQ'],
+      ['bangla-1', 'নিরীহ বাঙালি', 'high', 'frequent CQ'],
+      ['bangla-1', 'পল্লিসাহিত্য', 'high', 'frequent CQ'],
+      ['bangla-1', 'আম-আঁটির ভেঁপু', 'high', 'frequent CQ'],
+      ['bangla-1', 'মানুষ মুহম্মদ (স.)', 'high', 'frequent CQ'],
+      ['bangla-1', 'নিমগাছ', 'high', 'frequent CQ'],
+      ['bangla-1', 'উপেক্ষিত শক্তির উদ্বোধন', 'high', 'frequent CQ'],
+      ['bangla-1', 'প্রবাস বন্ধু', 'high', 'CQ + MCQ'],
+      ['bangla-1', 'মমতাদি', 'high', 'CQ sombhob — title variant: book TOC "মমতা"'],
+      ['bangla-1', 'রহমানের মা', 'high', 'CQ sombhob'],
+      ['bangla-1', 'বনমানুষ', 'high', 'CQ sombhob'],
+      ['bangla-1', 'একাত্তরের দিনগুলি', 'high', 'very frequent CQ'],
+      ['bangla-1', 'স্বাধীনতা আমার স্বাধীনতা', 'high', 'frequent CQ'],
+      ['bangla-1', 'একুশের গল্প', 'high', 'frequent CQ'],
+      ['bangla-1', 'আমাদের সংস্কৃতি', 'high', 'CQ + MCQ'],
+      ['bangla-1', 'সাহিত্যের রূপ ও রীতি', 'high', 'CQ + MCQ'],
+      ['bangla-1', 'বাঙলা শব্দ', 'high', 'frequent CQ'],
+      ['bangla-1', 'আমাদের নতুন গৌরবগাথা', 'high', 'CQ + MCQ'],
+      /* ---- Bangla 1st · poetry ---- */
+      ['bangla-1', 'বন্দনা', 'low', 'middle-era — MCQ only'],
+      ['bangla-1', 'হামদ', 'low', 'middle-era — MCQ only'],
+      ['bangla-1', 'বনলতা', 'no', 'NCTB contents-e nei — off-syllabus (kept for reading only)'],
+      ['bangla-1', '১৯৭১ — উপন্যাস', 'low', 'companion reading — MCQ only'],
+      ['bangla-1', 'বহিপীর — নাটক', 'low', 'companion reading — MCQ only'],
+      ['bangla-1', 'বঙ্গবাণী', 'high', 'frequent CQ + MCQ'],
+      ['bangla-1', 'কপোতাক্ষ নদ', 'high', 'very frequent CQ'],
+      ['bangla-1', 'জীবন-সঙ্গীত', 'high', 'CQ sombhob'],
+      ['bangla-1', 'প্রাণ', 'high', 'frequent CQ'],
+      ['bangla-1', 'জুতা-আবিষ্কার', 'high', 'CQ sombhob (humour poem)'],
+      ['bangla-1', 'অন্ধবধূ', 'high', 'frequent CQ'],
+      ['bangla-1', 'ঝরনার গান', 'high', 'CQ + MCQ'],
+      ['bangla-1', 'ছায়াবাজি', 'high', 'CQ sombhob'],
+      ['bangla-1', 'জীবন বিনিময়', 'high', 'CQ sombhob'],
+      ['bangla-1', 'মানুষ', 'high', 'very frequent CQ (Nazrul)'],
+      ['bangla-1', 'উমর ফারুক', 'high', 'frequent CQ'],
+      ['bangla-1', 'সেইদিন এই মাঠ', 'high', 'frequent CQ'],
+      ['bangla-1', 'যাব আমি তোমার দেশে', 'high', 'frequent CQ'],
+      ['bangla-1', 'একটি কাফি', 'high', 'CQ sombhob (title fixed by guard 1.2)'],
+      ['bangla-1', 'আমার দেশ', 'high', 'CQ + MCQ'],
+      ['bangla-1', 'আশা', 'high', 'CQ sombhob'],
+      ['bangla-1', 'বৃষ্টি', 'high', 'CQ sombhob'],
+      ['bangla-1', 'আমি কোনো আগন্তুক নই', 'high', 'frequent CQ'],
+      ['bangla-1', 'মে-দিনের কবিতা', 'high', 'frequent CQ (author fixed: সুভাষ মুখোপাধ্যায়)'],
+      ['bangla-1', 'পোস্টার', 'high', 'CQ + MCQ'],
+      ['bangla-1', 'রানার', 'high', 'very frequent CQ (missing chapter — inserted by guard 1.2)'],
+      ['bangla-1', 'তোমাকে পাওয়ার জন্যে, হে স্বাধীনতা', 'high', 'very frequent CQ'],
+      ['bangla-1', 'অবাক সূর্যোদয়', 'high', 'frequent CQ (author fixed: হাসান হাফিজুর রহমান)'],
+      ['bangla-1', 'বোশেখ', 'high', 'frequent CQ'],
+      ['bangla-1', 'চুনিয়া আমার আর্কেডিয়া', 'high', 'CQ sombhob (author fixed: রফিক আজাদ)'],
+      ['bangla-1', 'মিছিল', 'high', 'CQ + MCQ'],
+      /* ---- Bangla 2nd · grammar (all MCQ goldmine) ---- */
+      ['bangla-2', 'ভাষা ও বাংলা ভাষা', 'high', 'MCQ'], ['bangla-2', 'বাংলা ব্যাকরণ', 'high', 'MCQ'],
+      ['bangla-2', 'বাংলা ভাষার রীতি ও বিভাজন', 'high', 'MCQ'], ['bangla-2', 'বাগ্‌যন্ত্র', 'high', 'MCQ'],
+      ['bangla-2', 'ধ্বনি ও বর্ণ', 'high', 'MCQ'], ['bangla-2', 'স্বরধ্বনি', 'high', 'MCQ'],
+      ['bangla-2', 'ব্যঞ্জনধ্বনি', 'high', 'MCQ'], ['bangla-2', 'বর্ণের উচ্চারণ', 'high', 'MCQ'],
+      ['bangla-2', 'শব্দ ও পদের গঠন', 'high', 'MCQ'], ['bangla-2', 'উপসর্গ দিয়ে শব্দ গঠন', 'high', 'MCQ'],
+      ['bangla-2', 'প্রত্যয় দিয়ে শব্দ গঠন', 'high', 'MCQ'], ['bangla-2', 'সমাস প্রক্রিয়ায় শব্দ গঠন', 'high', 'MCQ + written'],
+      ['bangla-2', 'সন্ধি', 'high', 'MCQ + written'], ['bangla-2', 'শব্দদ্বিত্ব', 'high', 'MCQ'],
+      ['bangla-2', 'নরবাচক ও নারীবাচক শব্দ', 'high', 'MCQ'], ['bangla-2', 'সংখ্যাবাচক শব্দ', 'high', 'MCQ'],
+      ['bangla-2', 'শব্দের শ্রেণিবিভাগ', 'high', 'MCQ'], ['bangla-2', 'বিশেষ্য', 'high', 'MCQ'],
+      ['bangla-2', 'সর্বনাম', 'high', 'MCQ'], ['bangla-2', 'বিশেষণ', 'high', 'MCQ'],
+      ['bangla-2', 'ক্রিয়া', 'high', 'MCQ'], ['bangla-2', 'ক্রিয়াবিশেষণ', 'high', 'MCQ'],
+      ['bangla-2', 'অনুসর্গ', 'high', 'MCQ'], ['bangla-2', 'যোজক', 'high', 'MCQ'],
+      ['bangla-2', 'আবেগ', 'high', 'MCQ'], ['bangla-2', 'নির্দেশক', 'high', 'MCQ'],
+      ['bangla-2', 'বচন', 'high', 'MCQ'], ['bangla-2', 'বিভক্তি', 'high', 'MCQ'],
+      ['bangla-2', 'ক্রিয়াবিভক্তি', 'high', 'MCQ'], ['bangla-2', 'ক্রিয়ার কাল', 'high', 'MCQ + written'],
+      ['bangla-2', 'বাক্যের অংশ ও শ্রেণিবিভাগ', 'high', 'MCQ'], ['bangla-2', 'বাক্যের বর্গ', 'high', 'MCQ'],
+      ['bangla-2', 'উদ্দেশ্য ও বিধেয়', 'high', 'MCQ'], ['bangla-2', 'সরল, জটিল ও যৌগিক বাক্য', 'high', 'MCQ + written'],
+      ['bangla-2', 'কারক', 'high', 'MCQ'], ['bangla-2', 'বাচ্য', 'high', 'MCQ + written'],
+      ['bangla-2', 'উক্তি', 'high', 'MCQ'], ['bangla-2', 'যতিচিহ্ন', 'high', 'MCQ + written'],
+      ['bangla-2', 'বাগর্থ', 'high', 'MCQ'], ['bangla-2', 'বাগধারা', 'high', 'MCQ + written'],
+      ['bangla-2', 'প্রতিশব্দ', 'high', 'MCQ'], ['bangla-2', 'বিপরীত শব্দ', 'high', 'MCQ'],
+      ['bangla-2', 'শব্দজোড়', 'high', 'MCQ'],
+      ['bangla-2', 'অনুচ্ছেদ', 'high', 'written — always in board paper'],
+      ['bangla-2', 'সারাংশ ও সারমর্ম', 'high', 'written — always in board paper'],
+      ['bangla-2', 'ভাবসম্প্রসারণ', 'high', 'written — always in board paper'],
+      ['bangla-2', 'চিঠিপত্র ও আবেদনপত্র', 'high', 'written — always in board paper'],
+      ['bangla-2', 'সংবাদ প্রতিবেদন', 'high', 'written — frequent'],
+      ['bangla-2', 'প্রবন্ধ ও রচনা', 'high', 'written — frequent']
+    ];
+
+    /* Runtime DATA corrections (index.html is NEVER edited for these). */
+    var FIXES = [
+      { s: 'bangla-1', match: { title: 'একটি কুঁড়ি' }, set: { title: 'একটি কাফি' }, why: 'book poem = একটি কাফি (বিষ্ণু দে)' },
+      { s: 'bangla-1', match: { title: 'মে-দিনের কবিতা' }, set: { bn: 'সুভাষ মুখোপাধ্যায়' }, why: 'author = সুভাষ মুখোপাধ্যায়, not সুকান্ত' },
+      { s: 'bangla-1', match: { title: 'অবাক সূর্যোদয়' }, set: { bn: 'হাসান হাফিজুর রহমান' }, why: 'author = হাসান হাফিজুর রহমান, not আবুল হাসান' },
+      { s: 'bangla-1', match: { title: 'চুনিয়া আমার আর্কেডিয়া' }, set: { bn: 'রফিক আজাদ' }, why: 'author = রফিক আজাদ, not হেলাল হাফিজ' },
+      { s: 'bangla-1', insertAfter: { title: 'পোস্টার' }, add: { title: 'রানার', bn: 'সুকান্ত ভট্টাচার্য', section: 'Poetry · পদ্য' }, why: 'missing poem রানার (book p.237)' },
+      { s: 'physics', match: { bn: 'আধুনিক পদার্থবিজ্ঞান ও ইলেকট্রনিকস' }, set: { title: 'Radioactivity & Electronics', bn: 'তেজস্ক্রিয়তা ও ইলেকট্রনিক্স' }, why: 'book ch.13 name' },
+      { s: 'ict', match: { title: 'Computer Maintenance & Cyber Safety' }, set: { bn: 'কম্পিউটার রক্ষণাবেক্ষণ ও সাইবার নিরাপত্তা' }, why: 'new book ch.2 name' },
+      { s: 'ict', match: { title: 'The Internet in Education' }, set: { title: 'Internet & Web Introduction', bn: 'ইন্টারনেট ও ওয়েব পরিচিতি' }, why: 'new book ch.3 name' }
+    ];
+
+    /* Rotating নির্মিতি examples — reference only (low chance any given year). */
+    var ROTATING = ['আমন্ত্রণপত্র', 'মানপত্র', 'ব্যবসায়িক পত্র', 'জগদীশচন্দ্র বসু', 'রোকেয়া সাখাওয়াত হোসেন',
+      'লঞ্চ ভ্রমণের অভিজ্ঞতা', 'একটি ঝড়ের রাত', 'কৃষি উদ্যোক্তা', 'কৃষিকাজে বিজ্ঞান', 'মাদকাসক্তি ও এর প্রতিকার',
+      'বাংলাদেশের প্রাকৃতিক দুর্যোগ', 'বিশ্বকোষ', 'বাংলাদেশের পর্যটন শিল্প', 'বাংলাদেশের উৎসব',
+      'ক্রিকেট বাংলাদেশ', 'বাংলাদেশের ফুটবল'];
+
+    var MATCH_TABLE = [
+      ['physics', '✎', 'ch.13 name fixed (তেজস্ক্রিয়তা ও ইলেকট্রনিক্স); app-only "Practical preparation" = syllabus practical, kept'],
+      ['chemistry', '✓', 'all 12 chapters match book (+ practical)'],
+      ['biology', '✓', 'all 14 chapters match book (+ practical)'],
+      ['math', '✓', 'all 17 chapters match; back matter (উত্তরমালা/পরিশিষ্ট/স্মরণীয়) intentionally not in app'],
+      ['higher-math', '✓', 'all 14 chapters match — ELECTIVE subject (only if you took it)'],
+      ['bangla-1', '✎', 'রানার inserted; একটি কাফি + 3 author names fixed; বনলতা off-TOC → NOT IN EXAM; মমতাদি/মমতা variant kept'],
+      ['bangla-2', '✓', '49 chapters match; book sub-examples live inside chapter topics'],
+      ['english-1', '✓', '16 units match; app adds 5 exam-skill chapters (unseen, matching, dialogues…)'],
+      ['english-2', '✎', 'app regroups book units into exam skills — coverage equivalent (Speech/Conditionals/Passive/CV/Summaries/Graphs inside topics); verify once'],
+      ['bgs', '✓', 'all 15 chapters match'],
+      ['islam', '✓', 'all 5 chapters match (sub-topics inside)'],
+      ['ict', '✎', 'ch.2 & ch.3 renamed to new book names']
+    ];
+
+    var META = {};
+    DEFAULT_META.concat(Array.isArray(window.SSC_EXAM_META) ? window.SSC_EXAM_META : []).forEach(function (row) {
+      META[row[1]] = { s: row[0], t: row[2], n: row[3] || '' };
+    });
+
+    var stats = { fixesApplied: 0, badges: 0, fixLog: [] };
+
+    /* ---- 1) runtime DATA fixes ---- */
+    function applyFixes() {
+      if (typeof DATA === 'undefined' || !Array.isArray(DATA)) return;
+      FIXES.forEach(function (fix) {
+        var subj = null;
+        for (var i = 0; i < DATA.length; i++) if (DATA[i].id === fix.s) subj = DATA[i];
+        if (!subj) return;
+        if (fix.match) {
+          for (var c = 0; c < subj.chapters.length; c++) {
+            var ch = subj.chapters[c], ok = true;
+            for (var k in fix.match) if (ch[k] !== fix.match[k]) { ok = false; break; }
+            if (ok) {
+              for (var key in fix.set) ch[key] = fix.set[key];
+              stats.fixesApplied++; stats.fixLog.push('✎ ' + fix.s + ': ' + fix.why);
+              return;
+            }
+          }
+        }
+        if (fix.insertAfter) {
+          var at = -1;
+          for (var j = 0; j < subj.chapters.length; j++) if (subj.chapters[j].title === fix.insertAfter.title) at = j;
+          var exists = subj.chapters.some(function (x) { return x.title === fix.add.title; });
+          if (at > -1 && !exists) {
+            var donor = subj.chapters[at];
+            var topics = (donor.topics || []).map(function (t, ti) {
+              return { id: 'upx12-' + fix.add.title + '-' + ti, title: t.title, examType: t.examType || 'both' };
+            });
+            subj.chapters.splice(at + 1, 0, {
+              id: 'upx12-' + fix.add.title, title: fix.add.title, bn: fix.add.bn,
+              section: fix.add.section || donor.section, topics: topics
+            });
+            stats.fixesApplied++; stats.fixLog.push('+ ' + fix.s + ': ' + fix.why);
+          }
+        }
+      });
+      if (stats.fixesApplied && typeof render === 'function') { try { render(true); } catch (e) {} }
+    }
+
+    /* ---- 2) badge injector ---- */
+    var FLAG_TEXT = { high: 'IMPORTANT', low: 'LOW CHANCE', no: 'NOT IN EXAM' };
+    function badgeNode(tier) {
+      var b = document.createElement('span');
+      b.className = 'upx-flag upx-flag-' + tier;
+      b.textContent = FLAG_TEXT[tier];
+      return b;
+    }
+    function scan() {
+      var targets = document.querySelectorAll('article.chapter-card .chapter-title h3, .topic-item .topic-text');
+      [].forEach.call(targets, function (node) {
+        if (node.querySelector('.upx-flag') || node.dataset.upxScanned) return;
+        node.dataset.upxScanned = '1';
+        var title = node.textContent.trim();
+        var meta = META[title];
+        if (meta) {
+          node.appendChild(badgeNode(meta.t));
+          node.title = meta.n;
+          stats.badges++;
+        }
+      });
+      updateAdminRow();
+    }
+    function updateAdminRow() {
+      var row = document.getElementById('upx-guard-row');
+      if (row) row.textContent = stats.fixesApplied + ' fixes · ' + stats.badges + ' badges';
+    }
+    function addAdminRow() {
+      var body = document.querySelector('#upx-admin .upx-admin-body');
+      var actions = document.querySelector('#upx-admin .upx-admin-actions');
+      if (!body || !actions || document.getElementById('upx-guard-row')) return;
+      var row = document.createElement('div');
+      row.className = 'upx-row';
+      row.innerHTML = '<span>Syllabus guard</span><b id="upx-guard-row" class="upx-ok"></b>';
+      body.insertBefore(row, actions);
+      updateAdminRow();
+    }
+
+    /* ---- 3) public reference panel ---- */
+    function buildPanel() {
+      var host = document.getElementById('upx-guard-lists');
+      if (!host) return;
+      function list(tier) {
+        return DEFAULT_META.concat(Array.isArray(window.SSC_EXAM_META) ? window.SSC_EXAM_META : [])
+          .filter(function (r) { return r[2] === tier; })
+          .map(function (r) { return '<li><b>' + r[1] + '</b> <small>(' + r[0] + ')</small> — ' + (r[3] || '') + '</li>'; }).join('');
+      }
+      var html = '';
+      html += '<div class="upx-ghead">🔴 Exam e ase na (content only)</div><ul class="upx-glist">' + list('no') + '</ul>';
+      html += '<div class="upx-ghead">🟡 Low chance / MCQ only</div><ul class="upx-glist">' + list('low') + '</ul>';
+      html += '<div class="upx-ghead">🟡 Rotating নির্মিতি examples (format practice, not fixed content)</div><ul class="upx-glist"><li>' + ROTATING.join(' · ') + '</li></ul>';
+      html += '<div class="upx-ghead">✎ Auto-fixes applied to app data at runtime</div><ul class="upx-glist">' +
+        (stats.fixLog.length ? stats.fixLog.map(function (f) { return '<li>' + f + '</li>'; }).join('') : '<li>none needed</li>') + '</ul>';
+      html += '<div class="upx-ghead">📚 Book vs app data match</div><table class="upx-match">' +
+        MATCH_TABLE.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('') + '</table>';
+      host.innerHTML = html;
+      var stamp = document.getElementById('upx-guard-stamp');
+      if (stamp) stamp.textContent = 'Guard checked at ' + new Date().toLocaleString() + ' · ' + stats.fixesApplied + ' data fixes · ' + Object.keys(META).length + ' tracked items';
+    }
+
+    /* ---- 4) hide the 1.0 demo card outside test mode ---- */
+    function syncDemo() {
+      var demo = document.getElementById('update-1-0');
+      if (!demo) return;
+      demo.style.display = window.SSC_ADMIN_TEST_MODE ? '' : 'none';
+    }
+    var tries = 0;
+    var poll = setInterval(function () {
+      tries++;
+      var mode = window.SSC_ADMIN && window.SSC_ADMIN.state ? window.SSC_ADMIN.state.mode : 'pending';
+      if (mode !== 'pending' || tries > 32) { syncDemo(); clearInterval(poll); }
+    }, 250);
+
+    /* ---- boot ---- */
+    applyFixes();
+    buildPanel();
+    addAdminRow();
+    scan();
+    if ('MutationObserver' in window) {
+      var t = null;
+      new MutationObserver(function () {
+        clearTimeout(t);
+        t = setTimeout(scan, 220);
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+    document.addEventListener('updates:loaded', scan);
+    window.SSC_GUARD = { meta: META, fixesApplied: stats.fixesApplied, badges: stats.badges, rescan: scan, stats: stats };
+    console.info('[syllabus-guard] fixes:', stats.fixesApplied, '· tracked items:', Object.keys(META).length);
+  })();
 </script>
 
-<!-- ==================== UPDATE 1.2 · paste the next section here ====================
-<section class="upx-section" data-version="1.2" id="update-1-2">
-  … new feature markup …
-</section>
-<style> … new feature CSS (upx- prefixed) … </style>
-<script> … new feature JS … </script>
+<!-- ==================== UPDATE 1.3 · paste the next section here ====================
+<section class="upx-section" data-version="1.3" id="update-1-3"> … </section>
+<style> … upx- prefixed CSS … </style>
+<script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52a84fe1a6e92bc',t:'MTc5MzM2NDM1MQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52a84fe1a6e92bc',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52af428ccf825b1',t:'MTc5MzM2ODkwNQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52af428ccf825b1',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
