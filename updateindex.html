@@ -1,0 +1,398 @@
+<!-- ======================================================================
+     updateindex.html · SSC Tracker · update pack v1.1
+     ----------------------------------------------------------------------
+     This file is FETCHED by index.html through update-loader.js.
+     It is a FRAGMENT PACK: every new feature / section / fix lives here,
+     so index.html never needs a full rewrite again.
+
+     v1.0 → update channel demo section
+     v1.1 → ADMIN VIEW: no-login test mode when the database is NOT
+            connected; completely invisible to the public when it IS
+            connected (admin access then only via ?admin=1 + passcode).
+
+     RULES FOR EVERY FUTURE UPDATE (v1.2, …)
+       1. Add one new block:  <section class="upx-section" data-version="1.2"> … </section>
+       2. Put its CSS in a <style> block  (the loader moves it into <head>).
+       3. Put its JS in a <script> block  (the loader re-executes it).
+       4. Prefix all class names with "upx-" so they never clash with index.html.
+       5. Never add <html> / <head> / <body> wrappers here.
+     ====================================================================== -->
+
+<style>
+  /* ---------- update pack base styles (v1.0) ---------- */
+  .upx-section { max-width: 720px; margin: 24px auto; padding: 0 16px;
+                 font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .upx-card    { background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b;
+                 border-radius: 14px; padding: 22px 22px 18px;
+                 box-shadow: 0 10px 30px rgba(2, 6, 23, .35); }
+  .upx-badge   { display: inline-block; background: #22c55e; color: #052e16;
+                 font-weight: 700; font-size: 12px; letter-spacing: .08em;
+                 padding: 4px 10px; border-radius: 999px; }
+  .upx-card h2 { margin: 10px 0 6px; font-size: 20px; color: #f8fafc; }
+  .upx-card p  { margin: 6px 0; line-height: 1.55; font-size: 14.5px; color: #cbd5e1; }
+  .upx-card code { background: #1e293b; padding: 2px 6px; border-radius: 6px;
+                   font-size: 13px; color: #7dd3fc; }
+  .upx-btn     { margin-top: 12px; background: #22c55e; border: 0; color: #052e16;
+                 font-weight: 600; font-size: 14px; padding: 10px 16px;
+                 border-radius: 10px; cursor: pointer; }
+  .upx-btn:hover { background: #16a34a; }
+  .upx-stamp   { font-size: 12.5px; color: #64748b; }
+  .upx-ping    { color: #7dd3fc; font-size: 13px; }
+
+  /* ---------- ADMIN VIEW styles (v1.1) ---------- */
+  .upx-admin { position: fixed; top: 12px; right: 12px; z-index: 2147483000;
+               width: 322px; max-height: calc(100vh - 24px); overflow: auto;
+               background: #0b1020; color: #e2e8f0; border: 1px solid #24304f;
+               border-radius: 14px; box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+               font: 12.5px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
+  .upx-admin[hidden] { display: none; }
+  .upx-admin-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+                    border-bottom: 1px solid #24304f; position: sticky; top: 0;
+                    background: #0b1020; z-index: 1; }
+  .upx-admin-head strong { font-size: 12.5px; color: #f1f5f9; }
+  .upx-admin-head button { margin-left: auto; background: none; border: 0; color: #8ea0c0;
+                           font-size: 15px; cursor: pointer; padding: 2px 6px; }
+  .upx-admin-badge-test { background: #22c55e; color: #052e16; }
+  .upx-admin-badge-live { background: #f59e0b; color: #451a03; }
+  .upx-admin-body { padding: 10px 12px 12px; }
+  .upx-row { display: flex; justify-content: space-between; gap: 10px; padding: 3.5px 0;
+             border-bottom: 1px dashed #1c2740; }
+  .upx-row span { color: #94a3b8; }
+  .upx-row b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+  .upx-ok { color: #4ade80; } .upx-bad { color: #f87171; } .upx-warn { color: #fbbf24; }
+  .upx-info { color: #93c5fd; }
+  .upx-admin-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; }
+  .upx-admin-actions button { background: #16233d; border: 1px solid #2b3b63; color: #dbeafe;
+                              border-radius: 8px; padding: 6px 9px; font-size: 11.5px;
+                              cursor: pointer; }
+  .upx-admin-actions button:hover { background: #1d2f52; }
+  .upx-log { background: #070b16; border: 1px solid #1c2740; border-radius: 8px;
+             padding: 6px 8px; max-height: 118px; overflow: auto;
+             font-family: ui-monospace, Consolas, monospace; font-size: 10.5px;
+             color: #8ea0c0; white-space: pre-wrap; }
+  .upx-chip { position: fixed; top: 12px; right: 12px; z-index: 2147483000;
+              background: #16a34a; color: #052e16; font: 700 11px system-ui, sans-serif;
+              padding: 7px 11px; border: 0; border-radius: 999px; cursor: pointer;
+              box-shadow: 0 6px 18px rgba(0, 0, 0, .45); }
+  .upx-chip-live { background: #f59e0b; color: #451a03; }
+  .upx-chip[hidden] { display: none; }
+</style>
+
+<!-- ==================== UPDATE 1.0 · update channel demo ==================== -->
+<section class="upx-section" data-version="1.0" id="update-1-0">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.0</span>
+    <h2>Dynamic update channel is live</h2>
+    <p>
+      This card was fetched from <code>updateindex.html</code> and injected into
+      <code>index.html</code> at runtime &mdash; no full-file rewrite needed.
+      Every future feature (1.1, 1.2, &hellip;) appears above or below this one.
+    </p>
+    <p class="upx-stamp" data-stamp>Loading time: &mdash;</p>
+    <button type="button" class="upx-btn" data-ping>Ping the update channel</button>
+    <p class="upx-ping" data-ping-out hidden></p>
+  </div>
+</section>
+
+<!-- ==================== UPDATE 1.1 · ADMIN VIEW ==================== -->
+<section class="upx-section" data-version="1.1" id="update-1-1">
+  <div class="upx-admin" id="upx-admin" hidden role="region" aria-label="Admin view">
+    <div class="upx-admin-head">
+      <span class="upx-badge upx-admin-badge-test" id="upx-admin-badge">ADMIN</span>
+      <strong id="upx-admin-title">Admin view</strong>
+      <button type="button" id="upx-admin-close" title="Minimise to chip">&mdash;</button>
+    </div>
+    <div class="upx-admin-body">
+      <div class="upx-row"><span>Mode</span><b id="upx-mode">&hellip;</b></div>
+      <div class="upx-row"><span>DB configured</span><b id="upx-db-cfg">&hellip;</b></div>
+      <div class="upx-row"><span>DB reachable</span><b id="upx-db-net">&hellip;</b></div>
+      <div class="upx-row"><span>Supabase library</span><b id="upx-db-lib">&hellip;</b></div>
+      <div class="upx-row"><span>Sign-in overlay</span><b id="upx-overlay">&hellip;</b></div>
+      <div class="upx-row"><span>Browser online</span><b id="upx-online">&hellip;</b></div>
+      <div class="upx-row"><span>Service worker</span><b id="upx-sw">&hellip;</b></div>
+      <div class="upx-row"><span>Saved local data</span><b id="upx-store">&hellip;</b></div>
+      <div class="upx-row"><span>Update packs loaded</span><b id="upx-packs">&hellip;</b></div>
+      <div class="upx-admin-actions">
+        <button type="button" id="upx-reprobe">Re-probe DB</button>
+        <button type="button" id="upx-toggle-auth">Show sign-in 60s</button>
+        <button type="button" id="upx-demo">Demo data</button>
+        <button type="button" id="upx-export">Export diagnostics</button>
+      </div>
+      <div class="upx-log" id="upx-log"></div>
+    </div>
+  </div>
+  <button type="button" class="upx-chip" id="upx-chip" hidden>ADMIN</button>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.0 logic (proves scripts run after injection) ---------- */
+  (function () {
+    var section = document.getElementById('update-1-0');
+    if (!section) return;
+    var stamp = section.querySelector('[data-stamp]');
+    stamp.textContent = 'Loading time: ' + new Date().toLocaleString();
+    var clicks = 0;
+    var btn = section.querySelector('[data-ping]');
+    var out = section.querySelector('[data-ping-out]');
+    btn.addEventListener('click', function () {
+      clicks += 1;
+      out.hidden = false;
+      out.textContent = 'Ping #' + clicks + ' OK · ' + new Date().toLocaleTimeString();
+    });
+  })();
+
+  /* ---------- UPDATE 1.1 · ADMIN VIEW logic ---------- */
+  (function () {
+    'use strict';
+
+    var PASSCODE = window.SSC_ADMIN_PASSCODE || 'ssc-admin-2027';
+    var APP_KEY  = 'orbit-ssc-2027-v1';
+    var params   = new URLSearchParams(location.search);
+    var wantAdmin = params.has('admin') || location.hash.indexOf('admin') > -1;
+
+    var state = {
+      configured: !!window.SSC_DB_CONFIGURED,
+      reachable: null,          // null = not probed yet
+      probeMs: null,
+      probeDetail: '',
+      mode: 'pending'           // 'test' | 'live'
+    };
+    var authPause = false;      // true while admin temporarily wants the sign-in overlay
+
+    function el(id) { return document.getElementById(id); }
+    function now() { return new Date().toLocaleTimeString(); }
+    function log(msg) {
+      var box = el('upx-log');
+      if (!box) return;
+      box.textContent += '[' + now() + '] ' + msg + '\n';
+      box.scrollTop = box.scrollHeight;
+    }
+    function set(rowId, text, cls) {
+      var node = el(rowId);
+      if (!node) return;
+      node.textContent = text;
+      node.className = cls || 'upx-info';
+    }
+
+    /* Lightweight reachability probe: any HTTP answer from the Supabase host
+       means "connected"; a network failure means "not connected". */
+    function probe() {
+      var cfg = window.ORBIT_CLOUD_CONFIG;
+      if (!cfg || !cfg.supabaseUrl) {
+        return Promise.resolve({ reachable: false, ms: 0, detail: 'no supabaseUrl in cloud-config.js' });
+      }
+      var t0 = performance.now();
+      var ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 3500) : null;
+      return fetch(cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/', {
+        method: 'GET', cache: 'no-store', signal: ctrl ? ctrl.signal : undefined
+      }).then(function (r) {
+        clearTimeout(timer);
+        var ms = Math.round(performance.now() - t0);
+        return { reachable: true, ms: ms, detail: 'HTTP ' + r.status + ' in ' + ms + 'ms' };
+      }).catch(function (err) {
+        clearTimeout(timer);
+        var ms = Math.round(performance.now() - t0);
+        return { reachable: false, ms: ms, detail: (err && err.name === 'AbortError' ? 'timeout 3500ms' : String(err && err.message || err)) };
+      });
+    }
+
+    function unlock() { if (window.SSC_ADMIN_UNLOCK) window.SSC_ADMIN_UNLOCK(); }
+
+    /* While in TEST mode, keep the sign-in overlay hidden even if app code
+       re-shows it later (e.g. a stray getSession rejection). */
+    function watchOverlay() {
+      var overlay = el('auth-overlay');
+      if (!overlay || !('MutationObserver' in window)) return;
+      new MutationObserver(function () {
+        if (state.mode === 'test' && !authPause && !overlay.hidden) {
+          unlock();
+          log('sign-in overlay re-appeared → hidden again (test mode)');
+        }
+        refreshOverlayRow();
+      }).observe(overlay, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
+    function refreshOverlayRow() {
+      var overlay = el('auth-overlay');
+      if (!overlay) { set('upx-overlay', 'not found', 'upx-warn'); return; }
+      set('upx-overlay', overlay.hidden ? 'hidden (unlocked)' : 'VISIBLE (locked)', overlay.hidden ? 'upx-ok' : 'upx-bad');
+    }
+
+    function refreshRows() {
+      set('upx-mode', state.mode === 'test' ? 'TEST MODE — DB not connected' : 'PRODUCTION — DB live', state.mode === 'test' ? 'upx-ok' : 'upx-warn');
+      set('upx-db-cfg', state.configured ? 'yes' : 'no', state.configured ? 'upx-ok' : 'upx-bad');
+      set('upx-db-net', state.reachable === null ? 'probing…' : (state.reachable ? 'yes (' + state.probeDetail + ')' : 'no (' + state.probeDetail + ')'), state.reachable ? 'upx-ok' : 'upx-bad');
+      set('upx-db-lib', window.supabase && window.supabase.createClient ? 'loaded' : 'missing', (window.supabase && window.supabase.createClient) ? 'upx-ok' : 'upx-bad');
+      set('upx-online', navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'upx-ok' : 'upx-warn');
+      set('upx-sw', ('serviceWorker' in navigator) ? (navigator.serviceWorker.controller ? 'active' : 'registered/idle') : 'unsupported', 'upx-info');
+      try {
+        var raw = localStorage.getItem(APP_KEY);
+        set('upx-store', raw ? (raw.length + ' bytes saved') : 'none', raw ? 'upx-ok' : 'upx-info');
+      } catch (e) { set('upx-store', 'blocked', 'upx-bad'); }
+      var packs = [].map.call(document.querySelectorAll('#update-slot [data-version]'), function (s) { return s.getAttribute('data-version'); });
+      set('upx-packs', packs.length ? packs.join(', ') : 'none', packs.length ? 'upx-ok' : 'upx-warn');
+      refreshOverlayRow();
+    }
+
+    function showPanel() {
+      var panel = el('upx-admin');
+      var chip  = el('upx-chip');
+      var badge = el('upx-admin-badge');
+      var title = el('upx-admin-title');
+      if (!panel) return;
+      panel.hidden = false;
+      chip.hidden = true;
+      if (state.mode === 'test') {
+        badge.textContent = 'ADMIN TEST MODE';
+        badge.className = 'upx-badge upx-admin-badge-test';
+        title.textContent = 'DB not connected — no login needed';
+        chip.className = 'upx-chip';
+      } else {
+        badge.textContent = 'ADMIN';
+        badge.className = 'upx-badge upx-admin-badge-live';
+        title.textContent = 'Production diagnostics';
+        chip.className = 'upx-chip upx-chip-live';
+      }
+      chip.textContent = state.mode === 'test' ? 'ADMIN TEST' : 'ADMIN';
+      refreshRows();
+    }
+
+    function hidePanel() {
+      var panel = el('upx-admin');
+      var chip  = el('upx-chip');
+      if (panel) panel.hidden = true;
+      if (chip) chip.hidden = false;
+    }
+
+    function exportDiagnostics() {
+      var payload = {
+        exportedAt: new Date().toISOString(),
+        mode: state.mode,
+        dbConfigured: state.configured,
+        dbReachable: state.reachable,
+        probeDetail: state.probeDetail,
+        supabaseLib: !!(window.supabase && window.supabase.createClient),
+        online: navigator.onLine,
+        serviceWorker: ('serviceWorker' in navigator) ? !!navigator.serviceWorker.controller : false,
+        updatePacks: [].map.call(document.querySelectorAll('#update-slot [data-version]'), function (s) { return s.getAttribute('data-version'); }),
+        localStorage: (function () {
+          try {
+            var out = {};
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (k && k.indexOf('orbit-') === 0) out[k] = (localStorage.getItem(k) || '').length + ' bytes';
+            }
+            return out;
+          } catch (e) { return 'blocked'; }
+        })(),
+        userAgent: navigator.userAgent
+      };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ssc-admin-diagnostics-' + Date.now() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+      log('diagnostics exported');
+    }
+
+    function wireButtons() {
+      el('upx-admin-close').addEventListener('click', hidePanel);
+      el('upx-chip').addEventListener('click', showPanel);
+      el('upx-reprobe').addEventListener('click', function () {
+        log('re-probing database…');
+        set('upx-db-net', 'probing…', 'upx-info');
+        probe().then(function (r) {
+          state.reachable = r.reachable; state.probeMs = r.ms; state.probeDetail = r.detail;
+          log('probe: ' + r.detail);
+          refreshRows();
+        });
+      });
+      el('upx-toggle-auth').addEventListener('click', function () {
+        authPause = !authPause;
+        if (authPause) {
+          var overlay = el('auth-overlay');
+          if (overlay) overlay.hidden = false;
+          log('sign-in overlay shown for 60s (test)');
+          setTimeout(function () {
+            authPause = false;
+            if (state.mode === 'test') unlock();
+            log('sign-in overlay auto-hidden again');
+            refreshOverlayRow();
+          }, 60000);
+        } else {
+          if (state.mode === 'test') unlock();
+          log('sign-in overlay hidden');
+        }
+        refreshOverlayRow();
+      });
+      el('upx-demo').addEventListener('click', function () {
+        if (typeof window.startDemo === 'function') { window.startDemo(); log('demo data started via app startDemo()'); }
+        else log('startDemo() not available in this build', 'upx-warn');
+      });
+      el('upx-export').addEventListener('click', exportDiagnostics);
+    }
+
+    function boot() {
+      var panel = el('upx-admin');
+      if (!panel) return;                       // pack markup missing → stay silent
+
+      if (!state.configured) {
+        /* Database not configured at all → TEST MODE, no login, no probe needed. */
+        state.mode = 'test';
+        state.reachable = false;
+        state.probeDetail = 'cloud-config.js missing/empty or supabase lib absent';
+        window.SSC_ADMIN_TEST_MODE = true;
+        unlock();
+        watchOverlay();
+        wireButtons();
+        showPanel();
+        log('admin TEST mode active — database not configured, no login required');
+        return;
+      }
+
+      /* Configured → probe reachability before deciding. */
+      probe().then(function (r) {
+        state.reachable = r.reachable; state.probeMs = r.ms; state.probeDetail = r.detail;
+        if (!r.reachable) {
+          state.mode = 'test';
+          window.SSC_ADMIN_TEST_MODE = true;
+          unlock();
+          watchOverlay();
+          wireButtons();
+          showPanel();
+          log('admin TEST mode active — configured but unreachable: ' + r.detail);
+          return;
+        }
+        /* LIVE / production: invisible to the public. */
+        state.mode = 'live';
+        window.SSC_ADMIN_TEST_MODE = false;
+        wireButtons();
+        var allowed = false;
+        if (wantAdmin) {
+          if (sessionStorage.getItem('sscAdminOk') === '1') allowed = true;
+          else {
+            var code = window.prompt('Admin passcode (production):');
+            if (code === PASSCODE) { sessionStorage.setItem('sscAdminOk', '1'); allowed = true; }
+          }
+        }
+        if (allowed) { showPanel(); log('admin panel opened in PRODUCTION (passcode accepted)'); }
+        else { log('production mode — admin view hidden from public'); }
+      });
+    }
+
+    window.SSC_ADMIN = { state: state, probe: probe, show: showPanel, hide: hidePanel };
+    boot();
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.2 · paste the next section here ====================
+<section class="upx-section" data-version="1.2" id="update-1-2">
+  … new feature markup …
+</section>
+<style> … new feature CSS (upx- prefixed) … </style>
+<script> … new feature JS … </script>
+=================================================================================== -->
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52a84fe1a6e92bc',t:'MTc5MzM2NDM1MQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52a84fe1a6e92bc',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
