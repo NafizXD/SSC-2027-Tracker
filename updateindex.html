@@ -23,6 +23,10 @@
      v1.9 → the same force now ALSO lives inside index.html as a parse-time
             inline script (zero flash of Log In, works even if the pack fetch
             fails). Ships a re-patched index.html.
+     v1.10→ Bangla 1st paper pruned to the OFFICIAL 2027 book TOC (32 works:
+            15 গদ্য + 15 কবিতা + ১৯৭১ উপন্যাস + বহিঃপীর নাটক); 25 off-syllabus
+            works removed; importance badges (IMPORTANT / LOW CHANCE /
+            NOT IN EXAM) removed everywhere per user directive.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -797,7 +801,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1070,9 +1074,110 @@
   </div>
 </section>
 
-<!-- ==================== UPDATE 1.10 · paste the next section here ====================
-<section class="upx-section" data-version="1.10" id="update-1-10"> … </section>
+<!-- ==================== UPDATE 1.10 · OFFICIAL 2027 SYLLABUS PRUNE ==================== -->
+<section class="upx-section" data-version="1.10" id="update-1-10">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.10</span>
+    <h2>বাংলা প্রথম পত্র = official 2027 book syllabus, exactly</h2>
+    <ul class="upx-glist">
+      <li><b>32 works kept</b> — 15 গদ্যাংশ + 15 কবিতাংশ + সহপাঠ [১৯৭১ (উপন্যাস), বহিঃপীর (নাটক)], exactly as the book's অধ্যায়ভিত্তিক পরীক্ষা প্রস্তুতি সূচি.</li>
+      <li><b>25 off-syllabus works removed</b> (লাইব্রেরি, উদ্যম ও পরিশ্রম, জীবনে শিল্পের স্থান, শিক্ষা ও মনুষ্যত্ব, রহমানের মা, বনমানুষ, একাত্তরের দিনগুলি, স্বাধীনতা আমার স্বাধীনতা, আমাদের সংস্কৃতি, সাহিত্যের রূপ ও রীতি, বাঙলা শব্দ, হামদ, বঙ্গবাণী, জীবন-সঙ্গীত, জুতা-আবিষ্কার, ছায়াবাজি, মানুষ, একটি কুঁড়ি/কাফি, আশা, মে-দিনের কবিতা, পোস্টার, বনলতা, অবাক সূর্যোদয়, চুনিয়া আমার আর্কেডিয়া, মিছিল).</li>
+      <li>Spelling aligned to the book: ঝরনার গান → <b>ঝর্ণার গান</b>, ১৯৭১ — উপন্যাস → <b>১৯৭১ (উপন্যাস)</b>, বহিপীর — নাটক → <b>বহিঃপীর (নাটক)</b>.</li>
+      <li><b>Important / unimportant marks removed</b> — no IMPORTANT / LOW CHANCE / NOT IN EXAM badges anywhere; the reference panel's tier lists are hidden too (auto-fix log &amp; book-match table stay).</li>
+    </ul>
+    <p class="upx-stamp">Runtime prune — index.html untouched.</p>
+  </div>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.10 · official 2027 syllabus prune + badges off ---------- */
+  (function () {
+    'use strict';
+
+    /* Works NOT in the official 2027 book TOC → removed from bangla-1. */
+    var DROP = [
+      'লাইব্রেরি', 'উদ্যম ও পরিশ্রম', 'জীবনে শিল্পের স্থান', 'শিক্ষা ও মনুষ্যত্ব',
+      'রহমানের মা', 'বনমানুষ', 'একাত্তরের দিনগুলি', 'স্বাধীনতা আমার স্বাধীনতা',
+      'আমাদের সংস্কৃতি', 'সাহিত্যের রূপ ও রীতি', 'বাঙলা শব্দ',
+      'হামদ', 'বঙ্গবাণী', 'জীবন-সঙ্গীত', 'জুতা-আবিষ্কার', 'ছায়াবাজি', 'মানুষ',
+      'একটি কুঁড়ি', 'একটি কাফি', 'আশা', 'মে-দিনের কবিতা', 'পোস্টার', 'বনলতা',
+      'অবাক সূর্যোদয়', 'চুনিয়া আমার আর্কেডিয়া', 'মিছিল'
+    ];
+    /* Align titles with the printed book TOC. */
+    var RENAME = {
+      'ঝরনার গান': 'ঝর্ণার গান',
+      '১৯৭১ — উপন্যাস': '১৯৭১ (উপন্যাস)',
+      'বহিপীর — নাটক': 'বহিঃপীর (নাটক)'
+    };
+
+    function prune() {
+      if (typeof DATA === 'undefined' || !Array.isArray(DATA)) return 0;
+      var subj = null;
+      for (var i = 0; i < DATA.length; i++) if (DATA[i].id === 'bangla-1') subj = DATA[i];
+      if (!subj || !Array.isArray(subj.chapters)) return 0;
+      var before = subj.chapters.length;
+      subj.chapters = subj.chapters.filter(function (c) { return DROP.indexOf(c.title) === -1; });
+      subj.chapters.forEach(function (c) { if (RENAME[c.title]) c.title = RENAME[c.title]; });
+      var dropped = before - subj.chapters.length;
+      if (dropped && typeof render === 'function') { try { render(true); } catch (e) {} }
+      return dropped;
+    }
+
+    /* Remove every importance badge already injected, and keep removing new ones. */
+    function stripBadges() {
+      var nodes = document.querySelectorAll('.upx-flag');
+      for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].parentNode) nodes[i].parentNode.removeChild(nodes[i]);
+      }
+      var row = document.getElementById('upx-guard-row');
+      if (row && row.dataset.syl10 !== '1') {
+        row.dataset.syl10 = '1';
+        row.textContent = row.textContent + ' · 1.10: syllabus pruned, badges off';
+      }
+      return nodes.length;
+    }
+
+    /* Hide the 🔴/ tier lists inside the (settings-gated) reference panel. */
+    function trimPanel() {
+      var host = document.getElementById('upx-guard-lists');
+      if (!host) return;
+      var heads = host.querySelectorAll('.upx-ghead');
+      for (var i = 0; i < heads.length; i++) {
+        var t = heads[i].textContent || '';
+        if (t.indexOf('🔴') === 0 || t.indexOf('🟡') === 0) {
+          var list = heads[i].nextElementSibling;
+          if (list && list.classList.contains('upx-glist')) list.parentNode.removeChild(list);
+          heads[i].parentNode.removeChild(heads[i]);
+        }
+      }
+    }
+
+    function apply() { var d = prune(); stripBadges(); trimPanel(); window.SSC_SYL10.dropped = d; return d; }
+
+    window.SSC_SYL10 = { apply: apply, prune: prune, stripBadges: stripBadges, dropped: 0 };
+
+    apply();
+    setTimeout(apply, 300);
+    setTimeout(apply, 900);
+    window.addEventListener('load', apply);
+
+    /* continuous suppression of late-injected badges */
+    if ('MutationObserver' in window) {
+      var pending = false;
+      new MutationObserver(function () {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(function () { pending = false; stripBadges(); });
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+
+    console.info('[syl-1.10] bangla-1 pruned to official 2027 TOC; importance badges removed');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.11 · paste the next section here ====================
+<section class="upx-section" data-version="1.11" id="update-1-11"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a52c23ee8dea062f',t:'MTc5MzM4MTM0Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a52c23ee8dea062f',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a53c3625ede78b01',t:'MTc5MzU0OTg2NQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a53c3625ede78b01',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
