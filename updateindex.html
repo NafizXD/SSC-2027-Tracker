@@ -27,6 +27,9 @@
             15 গদ্য + 15 কবিতা + ১৯৭১ উপন্যাস + বহিঃপীর নাটক); 25 off-syllabus
             works removed; importance badges (IMPORTANT / LOW CHANCE /
             NOT IN EXAM) removed everywhere per user directive.
+     v1.11→ FORGOT PASSWORD link on the Log In form (Supabase recovery email)
+            + recovery-link handler ("set a new password" dialog) +
+            CHANGE PASSWORD section inside Settings (any time, stays signed in).
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -801,7 +804,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1175,9 +1178,229 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.11 · paste the next section here ====================
-<section class="upx-section" data-version="1.11" id="update-1-11"> … </section>
+<!-- ==================== UPDATE 1.11 · FORGOT / CHANGE PASSWORD ==================== -->
+<section class="upx-section" data-version="1.11" id="update-1-11">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.11</span>
+    <h2>Forgot password + change password</h2>
+    <ul class="upx-glist">
+      <li><b>Log In form:</b> a "Forgot password?" link under the button opens an email box → Supabase sends a password-reset email.</li>
+      <li><b>Reset link:</b> opening the email link returns here and a "Set a new password" dialog appears automatically (recovery session detected).</li>
+      <li><b>Settings → Account password:</b> "Change password" any time while signed in — new password + confirm, you stay signed in.</li>
+      <li>Rules: minimum 8 characters, both fields must match; clear success/error messages everywhere.</li>
+    </ul>
+    <p class="upx-stamp">Works with the connected Supabase project; needs cloud sign-in (demo mode has no accounts).</p>
+  </div>
+</section>
+
+<style>
+  .upx-linkbtn{background:none;border:0;color:var(--accent,#5865f2);cursor:pointer;font:inherit;padding:4px 0;text-decoration:underline;}
+  .upx-linkbtn:hover{color:var(--accent-hover,#4752c4);}
+  .upx-forgot-row{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .upx-forgot-row label,.upx-reset-card label,.upx-pw-sec label{font-size:13px;color:var(--muted,#6b7078);display:block;margin:6px 0 2px;}
+  .upx-forgot-row input,.upx-reset-card input,.upx-pw-sec input{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line,#e3e4e8);border-radius:9px;font:inherit;background:var(--field,#fff);color:inherit;}
+  .upx-btnrow{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+  .upx-note{display:block;margin-top:6px;font-size:13px;color:var(--muted,#6b7078);}
+  .upx-note.ok{color:#1a7f37;} .upx-note.err{color:#c62828;}
+  #upx-reset-overlay{position:fixed;inset:0;background:rgba(10,12,20,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;}
+  .upx-reset-card{background:var(--panel,#fff);color:var(--text,#191b1f);padding:22px;border-radius:16px;width:min(92vw,400px);display:flex;flex-direction:column;gap:4px;box-shadow:0 18px 50px rgba(0,0,0,.35);}
+  .upx-reset-card h3{margin:0 0 4px;}
+  .upx-pw-sec{border-top:1px solid var(--line,#e3e4e8);margin-top:14px;padding-top:12px;}
+  .upx-pw-sec h3{margin:0 0 4px;font-size:15px;}
+</style>
+
+<script>
+  /* ---------- UPDATE 1.11 · forgot password + change password ---------- */
+  (function () {
+    'use strict';
+
+    function client() { return (typeof cloudClient !== 'undefined' && cloudClient) ? cloudClient : null; }
+    function user() { return (typeof cloudUser !== 'undefined' && cloudUser) ? cloudUser : null; }
+    function pwOk(pw) { return typeof pw === 'string' && pw.length >= 8; }
+
+    /* ---- 1) "Forgot password?" inside the Log In form ---- */
+    function injectForgot() {
+      var form = document.getElementById('auth-signin-form');
+      if (!form || document.getElementById('upx-forgot-row')) return;
+      var submit = form.querySelector('button[type="submit"]');
+      var row = document.createElement('div');
+      row.id = 'upx-forgot-row';
+      row.className = 'upx-forgot-row';
+      row.innerHTML =
+        '<button type="button" class="upx-linkbtn" data-upx11="forgot">Forgot password?</button>' +
+        '<div id="upx-forgot-box" hidden>' +
+        '<label for="upx-forgot-email">Account email</label>' +
+        '<input id="upx-forgot-email" type="email" placeholder="you@example.com" autocomplete="email">' +
+        '<div class="upx-btnrow">' +
+        '<button type="button" class="button" data-upx11="forgot-send">Send reset link</button>' +
+        '<button type="button" class="upx-linkbtn" data-upx11="forgot-back">Back to Log In</button>' +
+        '</div><small id="upx-forgot-note" class="upx-note"></small></div>';
+      if (submit) form.insertBefore(row, submit); else form.appendChild(row);
+    }
+
+    async function sendReset() {
+      var note = document.getElementById('upx-forgot-note');
+      var email = String((document.getElementById('upx-forgot-email') || {}).value || '').trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { note.className = 'upx-note err'; note.textContent = 'Enter a valid email address.'; return; }
+      var c = client();
+      if (!c) { note.className = 'upx-note err'; note.textContent = 'Account service is not connected right now — try again after refresh.'; return; }
+      note.className = 'upx-note'; note.textContent = 'Sending…';
+      try {
+        var res = await c.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+        if (res && res.error) throw res.error;
+        note.className = 'upx-note ok';
+        note.textContent = 'Reset link sent to ' + email + '. Open the email on this device and follow the link to set a new password.';
+        if (typeof authFeedback === 'function') authFeedback('Password reset email sent to ' + email, 'success');
+      } catch (err) {
+        note.className = 'upx-note err';
+        note.textContent = (err && err.message) || 'Could not send the reset email.';
+      }
+    }
+
+    /* ---- 2) recovery link return → "set a new password" dialog ---- */
+    var resetOpen = false;
+    function openResetDialog() {
+      if (resetOpen || document.getElementById('upx-reset-overlay')) return;
+      resetOpen = true;
+      var wrap = document.createElement('div');
+      wrap.id = 'upx-reset-overlay';
+      wrap.innerHTML =
+        '<div class="upx-reset-card" role="dialog" aria-modal="true" aria-label="Set a new password">' +
+        '<h3>Set a new password</h3>' +
+        '<small class="upx-note">Your reset link worked. Choose a new password (min 8 characters).</small>' +
+        '<label for="upx-reset-new">New password</label>' +
+        '<input id="upx-reset-new" type="password" autocomplete="new-password">' +
+        '<label for="upx-reset-confirm">Confirm new password</label>' +
+        '<input id="upx-reset-confirm" type="password" autocomplete="new-password">' +
+        '<div class="upx-btnrow">' +
+        '<button type="button" class="button" data-upx11="reset-send">Save new password</button>' +
+        '<button type="button" class="upx-linkbtn" data-upx11="reset-cancel">Not now</button>' +
+        '</div><small id="upx-reset-note" class="upx-note"></small></div>';
+      document.body.appendChild(wrap);
+      setTimeout(function () { var f = document.getElementById('upx-reset-new'); if (f) f.focus(); }, 0);
+    }
+    function closeResetDialog() {
+      var w = document.getElementById('upx-reset-overlay');
+      if (w && w.parentNode) w.parentNode.removeChild(w);
+      resetOpen = false;
+    }
+    async function saveResetPassword() {
+      var note = document.getElementById('upx-reset-note');
+      var a = String((document.getElementById('upx-reset-new') || {}).value || '');
+      var b = String((document.getElementById('upx-reset-confirm') || {}).value || '');
+      if (!pwOk(a)) { note.className = 'upx-note err'; note.textContent = 'Password must be at least 8 characters.'; return; }
+      if (a !== b) { note.className = 'upx-note err'; note.textContent = 'The two passwords do not match.'; return; }
+      var c = client();
+      if (!c) { note.className = 'upx-note err'; note.textContent = 'Account service not connected.'; return; }
+      note.className = 'upx-note'; note.textContent = 'Saving…';
+      try {
+        var res = await c.auth.updateUser({ password: a });
+        if (res && res.error) throw res.error;
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        closeResetDialog();
+        if (typeof authFeedback === 'function') authFeedback('Password updated. Use your new password from now on.', 'success');
+      } catch (err) {
+        note.className = 'upx-note err';
+        note.textContent = (err && err.message) || 'Could not update the password.';
+      }
+    }
+
+    function hookRecovery() {
+      var c = client();
+      if (!c || c.__upx11hook) return;
+      c.__upx11hook = true;
+      try {
+        c.auth.onAuthStateChange(function (event) {
+          if (event === 'PASSWORD_RECOVERY') setTimeout(openResetDialog, 0);
+        });
+      } catch (e) {}
+      if (/type=recovery|recovery_token|access_token=/.test(location.hash) && /recovery/.test(location.hash)) {
+        setTimeout(openResetDialog, 500);
+      }
+    }
+
+    /* ---- 3) Settings → Account password (change any time) ---- */
+    function injectSettingsPw() {
+      var body = document.querySelector('#settings-form .dialog-body');
+      if (!body || body.dataset.upx11) return;
+      body.dataset.upx11 = '1';
+      var sec = document.createElement('div');
+      sec.className = 'settings-section upx-pw-sec';
+      if (user()) {
+        sec.innerHTML =
+          '<h3>Account password</h3>' +
+          '<small class="upx-note">Change it whenever you want — you stay signed in.</small>' +
+          '<div class="upx-btnrow"><button type="button" class="button" data-upx11="pw-toggle">Change password</button></div>' +
+          '<div id="upx-pw-box" hidden>' +
+          '<label for="upx-pw-new">New password (min 8 characters)</label>' +
+          '<input id="upx-pw-new" type="password" autocomplete="new-password">' +
+          '<label for="upx-pw-confirm">Confirm new password</label>' +
+          '<input id="upx-pw-confirm" type="password" autocomplete="new-password">' +
+          '<div class="upx-btnrow"><button type="button" class="button" data-upx11="pw-send">Update password</button></div>' +
+          '<small id="upx-pw-note" class="upx-note"></small></div>';
+      } else {
+        sec.innerHTML = '<h3>Account password</h3><small class="upx-note">Sign in with your account to change your password.</small>';
+      }
+      body.appendChild(sec);
+    }
+
+    async function sendSettingsPw() {
+      var note = document.getElementById('upx-pw-note');
+      var a = String((document.getElementById('upx-pw-new') || {}).value || '');
+      var b = String((document.getElementById('upx-pw-confirm') || {}).value || '');
+      if (!pwOk(a)) { note.className = 'upx-note err'; note.textContent = 'Password must be at least 8 characters.'; return; }
+      if (a !== b) { note.className = 'upx-note err'; note.textContent = 'The two passwords do not match.'; return; }
+      var c = client();
+      if (!c || !user()) { note.className = 'upx-note err'; note.textContent = 'You are not signed in to an account.'; return; }
+      note.className = 'upx-note'; note.textContent = 'Updating…';
+      try {
+        var res = await c.auth.updateUser({ password: a });
+        if (res && res.error) throw res.error;
+        note.className = 'upx-note ok';
+        note.textContent = 'Password changed ✔ Use it the next time you log in.';
+        var n = document.getElementById('upx-pw-new'), k = document.getElementById('upx-pw-confirm');
+        if (n) n.value = ''; if (k) k.value = '';
+      } catch (err) {
+        note.className = 'upx-note err';
+        note.textContent = (err && err.message) || 'Could not change the password.';
+      }
+    }
+
+    /* ---- wiring ---- */
+    document.addEventListener('click', function (ev) {
+      var t = ev.target && ev.target.closest ? ev.target.closest('[data-upx11]') : null;
+      if (!t) return;
+      var act = t.getAttribute('data-upx11');
+      if (act === 'forgot') {
+        var box = document.getElementById('upx-forgot-box');
+        if (box) { box.hidden = false; var em = document.getElementById('upx-forgot-email'); if (em) em.focus(); }
+      } else if (act === 'forgot-back') {
+        var bx = document.getElementById('upx-forgot-box'); if (bx) bx.hidden = true;
+      } else if (act === 'forgot-send') { sendReset(); }
+      else if (act === 'pw-toggle') {
+        var pb = document.getElementById('upx-pw-box');
+        if (pb) { pb.hidden = !pb.hidden; if (!pb.hidden) { var f = document.getElementById('upx-pw-new'); if (f) f.focus(); } }
+      } else if (act === 'pw-send') { sendSettingsPw(); }
+      else if (act === 'reset-send') { saveResetPassword(); }
+      else if (act === 'reset-cancel') { closeResetDialog(); }
+    }, true);
+
+    function boot() { injectForgot(); hookRecovery(); }
+    boot();
+    setTimeout(boot, 300);
+    window.addEventListener('load', boot);
+    if ('MutationObserver' in window) {
+      new MutationObserver(function () { injectSettingsPw(); injectForgot(); hookRecovery(); })
+        .observe(document.body, { childList: true, subtree: true });
+    }
+
+    window.SSC_PW11 = { sendReset: sendReset, openResetDialog: openResetDialog, sendSettingsPw: sendSettingsPw };
+    console.info('[pw-1.11] forgot-password + change-password ready');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.12 · paste the next section here ====================
+<section class="upx-section" data-version="1.12" id="update-1-12"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a53c3625ede78b01',t:'MTc5MzU0OTg2NQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a53c3625ede78b01',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
