@@ -52,6 +52,12 @@
             update info cards now visible ONLY in Developer Mode; profile
             popup is a full PROFILE VIEW (badges, about, stats grid) with
             detailed progress as a section inside it.
+     v1.17→ DEVELOPER MASTER CLONE: devs can open ANY user's full tracker
+            dashboard (all subjects/chapters/checklists/bars, their exact
+            checkmarks) rendered from that user's Supabase snapshot, under a
+            glowing "⚡ Developer View" banner with a back button. 100%
+            READ-ONLY: every write path (commit, cloud sync, topic ticks,
+            ratings, pins, resets, imports, sign-out) is blocked while inside.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -826,7 +832,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14', 'update-1-15', 'update-1-16'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14', 'update-1-15', 'update-1-16', 'update-1-17'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1527,6 +1533,15 @@
       var panel = document.createElement('div');
       panel.className = 'upx-user-panel';
       panel.id = 'upx-user-panel';
+      var dv17 = window.SSC_DEVVIEW17;
+      if (dv17 && dv17.active) {
+        panel.innerHTML =
+          '<button type="button" class="upx-up-ava" data-upx12="open-settings" aria-label="Open settings">' + avaInner() + '</button>' +
+          '<div class="upx-up-meta"><b>' + esc(P().name || 'Learner') + '</b><small>@' + esc(dv17.username) + ' · ⚡ DEV VIEW</small></div>' +
+          '<button type="button" class="upx-up-gear" data-upx17="dev-exit" aria-label="Exit developer view"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>';
+        sb.appendChild(panel);
+        return;
+      }
       panel.innerHTML =
         '<button type="button" class="upx-up-ava" data-upx12="open-settings" aria-label="Open settings">' + avaInner() + '</button>' +
         '<div class="upx-up-meta"><b>' + esc(P().name || 'Learner') + '</b><small>@' + esc(uname()) + '</small></div>' +
@@ -2098,6 +2113,10 @@
         renderCosmetics(snap);
         fillProfileStats(snap, pubCount);
         detailBox.innerHTML = detailHTML(snap);
+        if (me.is_developer && !isMe && row.id) {
+          detailBox.insertAdjacentHTML('beforeend',
+            '<div class="upx-btnrow" style="margin-top:12px"><button type="button" class="button" data-upx17="dev-enter" data-uname="' + esc(row.username) + '">⚡ Open full dashboard clone (read-only)</button></div>');
+        }
       });
     }
 
@@ -2319,9 +2338,168 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.17 · paste the next section here ====================
-<section class="upx-section" data-version="1.17" id="update-1-17"> … </section>
+<!-- ==================== UPDATE 1.17 · DEVELOPER MASTER CLONE ==================== -->
+<section class="upx-section" data-version="1.17" id="update-1-17">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.17</span>
+    <h2>Developer master clone — full dashboard of any account, read-only</h2>
+    <ul class="upx-glist">
+      <li><b>Full clone:</b> a developer opening another user's profile gets "⚡ Open full dashboard clone" — the entire tracker UI (subjects, chapters, topic checklists, ratings, pins, progress bars, overview stats) re-rendered from <i>that user's</i> Supabase snapshot, exactly as they see it.</li>
+      <li><b>Banner:</b> animated "⚡ Developer View: viewing @name's account — read-only" bar pinned on top, with "← Back to my dashboard". Sidebar user panel switches to the target + ⚡ DEV VIEW, gear becomes the exit door.</li>
+      <li><b>Hard read-only:</b> while inside, <code>commit()</code> is a no-op (no localStorage, no cloud sync), and topic ticks, ratings, pins, reviews, excludes, resets, imports, demo mode, cloud sync/upload and sign-out clicks are all intercepted with a "read-only" toast.</li>
+      <li><b>Privacy intact:</b> private + non-developer → 🔒 restriction message; public + normal user → basic stats &amp; bars only; the clone button exists for developers only.</li>
+      <li>Exiting restores your own store byte-for-byte and re-renders your dashboard.</li>
+    </ul>
+    <p class="upx-stamp">Server side unchanged — the clone reads through get_user_progress (dev override).</p>
+  </div>
+</section>
+
+<style>
+  #upx-dv-banner{position:fixed;top:0;left:0;right:0;height:44px;z-index:9995;display:flex;align-items:center;justify-content:center;gap:14px;background:linear-gradient(90deg,#7c3aed,#db2777,#f59e0b,#7c3aed);background-size:300% 100%;animation:upxDvSlide 7s linear infinite;color:#fff;font-weight:650;font-size:13px;padding:0 12px;box-shadow:0 4px 18px rgba(124,58,237,.45);}
+  @keyframes upxDvSlide{0%{background-position:0% 0}100%{background-position:300% 0}}
+  #upx-dv-banner button{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.65);color:#fff;border-radius:14px;padding:5px 13px;font:inherit;font-size:12px;cursor:pointer;flex:none;}
+  #upx-dv-banner button:hover{background:rgba(0,0,0,.55);}
+  body.upx-dv .sidebar{top:44px;}
+  body.upx-dv .topbar{top:44px;}
+</style>
+
+<script>
+  /* ---------- UPDATE 1.17 · developer master clone (read-only) ---------- */
+  (function () {
+    'use strict';
+    var DEV = { active: false, username: '', name: '', own: null };
+    window.SSC_DEVVIEW17 = DEV;
+
+    var BLOCK_ACTIONS = {
+      'add-chapter': 1, 'add-topic': 1, 'edit-chapter': 1, 'clear-rating': 1,
+      'review': 1, 'pin': 1, 'exclude-chapter': 1, 'restore-chapter': 1,
+      'reset': 1, 'import': 1, 'restore-import': 1, 'confirm': 1,
+      'demo': 1, 'exit-demo': 1, 'cloud-sync': 1, 'cloud-upload': 1,
+      'cloud-signout': 1, 'logout': 1, 'download-app': 1
+    };
+
+    function say(msg) {
+      if (typeof toast === 'function') { try { toast(msg); return; } catch (e) {} }
+      console.info('[dev-1.17]', msg);
+    }
+
+    /* ---- write firewall: commit() becomes a no-op inside the clone ---- */
+    if (typeof window.commit === 'function') {
+      var origCommit17 = window.commit;
+      window.commit = function () {
+        if (DEV.active) { console.info('[dev-1.17] write blocked (read-only view)'); return undefined; }
+        return origCommit17.apply(this, arguments);
+      };
+    }
+
+    /* ---- click / change interception ---- */
+    document.addEventListener('click', function (ev) {
+      var t = ev.target;
+      var upx = t && t.closest ? t.closest('[data-upx17]') : null;
+      if (upx) {
+        var act = upx.getAttribute('data-upx17');
+        if (act === 'dev-exit') { ev.preventDefault(); ev.stopPropagation(); exitDevView(); return; }
+        if (act === 'dev-enter') {
+          ev.preventDefault(); ev.stopPropagation();
+          var un = upx.getAttribute('data-uname');
+          var s = document.getElementById('upx-social'); if (s && s.parentNode) s.parentNode.removeChild(s);
+          enterDevView(un);
+          return;
+        }
+      }
+      if (!DEV.active) return;
+      if (t && t.closest && t.closest('[data-topic]')) { ev.preventDefault(); ev.stopPropagation(); say('Read-only: developer view cannot modify this account.'); return; }
+      var el = t && t.closest ? t.closest('[data-action]') : null;
+      if (el && BLOCK_ACTIONS[el.getAttribute('data-action')]) {
+        ev.preventDefault(); ev.stopPropagation();
+        say('Read-only: developer view cannot modify this account.');
+      }
+    }, true);
+    document.addEventListener('change', function (ev) {
+      if (!DEV.active) return;
+      var t = ev.target;
+      if (t && t.dataset && (t.dataset.topic || t.dataset.rating)) {
+        ev.preventDefault(); ev.stopPropagation();
+        say('Read-only: developer view cannot modify this account.');
+      }
+    }, true);
+
+    /* ---- banner ---- */
+    function banner() {
+      var b = document.getElementById('upx-dv-banner');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'upx-dv-banner';
+        document.body.appendChild(b);
+      }
+      b.innerHTML = '<span>⚡ Developer View: viewing <b>' + (DEV.name || DEV.username) + '</b>\'s account — read-only</span>' +
+        '<button type="button" data-upx17="dev-exit">← Back to my dashboard</button>';
+    }
+    function unbanner() {
+      var b = document.getElementById('upx-dv-banner');
+      if (b && b.parentNode) b.parentNode.removeChild(b);
+    }
+    function refreshPanel() {
+      var p = document.getElementById('upx-user-panel');
+      if (p && p.parentNode) p.parentNode.removeChild(p);
+    }
+
+    /* ---- enter / exit ---- */
+    function enterDevView(username) {
+      var c = (typeof cloudClient !== 'undefined' && cloudClient) ? cloudClient : null;
+      if (!c) { say('Sign in to use developer view.'); return; }
+      if (!(window.SSC_SOCIAL15 && window.SSC_SOCIAL15.me && window.SSC_SOCIAL15.me.is_developer)) { say('Developer mode required.'); return; }
+      if (DEV.active) exitDevView();
+      say('Loading ' + username + '\'s dashboard…');
+      c.from('profiles').select('id,username,is_private').eq('username', username).maybeSingle().then(function (r) {
+        if (!r || !r.data) { say('Profile not found.'); return; }
+        return c.rpc('get_user_progress', { target: r.data.id }).then(function (q) {
+          var snap = q && q.data;
+          if (!snap) { say('No progress snapshot for this user.'); return; }
+          var clone = JSON.parse(JSON.stringify(snap));
+          if (!clone.chapters || typeof clone.chapters !== 'object') clone.chapters = {};
+          DEV.own = store;               /* global lexical binding swap */
+          store = clone;
+          DEV.active = true;
+          DEV.username = username;
+          DEV.name = (clone.profile && clone.profile.name) || username;
+          document.body.classList.add('upx-dv');
+          banner();
+          refreshPanel();
+          if (typeof render === 'function') render(true);
+          console.info('[dev-1.17] entered read-only clone of @' + username);
+          say('Viewing ' + DEV.name + '\'s dashboard — read-only.');
+        });
+      });
+    }
+    function exitDevView() {
+      if (!DEV.active) return;
+      store = DEV.own;
+      DEV.active = false;
+      DEV.own = null;
+      DEV.username = ''; DEV.name = '';
+      document.body.classList.remove('upx-dv');
+      unbanner();
+      refreshPanel();
+      if (typeof render === 'function') render(true);
+      console.info('[dev-1.17] exited clone — own dashboard restored');
+    }
+    DEV.enter = enterDevView;
+    DEV.exit = exitDevView;
+
+    /* safety: leaving the page while inside the clone never persists anything
+       (commit is blocked), but remind on accidental reload */
+    window.addEventListener('beforeunload', function (ev) {
+      if (DEV.active) { ev.preventDefault(); ev.returnValue = ''; }
+    });
+
+    console.info('[dev-1.17] master clone engine ready');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.18 · paste the next section here ====================
+<section class="upx-section" data-version="1.18" id="update-1-18"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a54492d378941e99',t:'MTc5MzYzNzU0OA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a54492d378941e99',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a544bdffeb8c8b01',t:'MTc5MzYzOTMxNg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a544bdffeb8c8b01',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
