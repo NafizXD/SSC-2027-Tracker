@@ -30,6 +30,10 @@
      v1.11→ FORGOT PASSWORD link on the Log In form (Supabase recovery email)
             + recovery-link handler ("set a new password" dialog) +
             CHANGE PASSWORD section inside Settings (any time, stays signed in).
+     v1.12→ DISCORD-STYLE SETTINGS (left category nav + content pane + ESC)
+            and a PROFILE SYSTEM: avatar (emoji or upload), banner colour,
+            About-me, display name — shown on a Discord-style user panel at
+            the bottom of the sidebar and on the profile card in settings.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -804,7 +808,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1399,8 +1403,373 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.12 · paste the next section here ====================
-<section class="upx-section" data-version="1.12" id="update-1-12"> … </section>
+<!-- ==================== UPDATE 1.12 · DISCORD-STYLE SETTINGS + PROFILES ==================== -->
+<section class="upx-section" data-version="1.12" id="update-1-12">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.12</span>
+    <h2>Discord-style settings + profile system</h2>
+    <ul class="upx-glist">
+      <li><b>Settings is now a full-screen Discord-style screen:</b> category nav on the left (My Profile, My Account, Appearance, Study, Updates), content pane on the right, ESC / close button top-right.</li>
+      <li><b>Profile system:</b> avatar (emoji picker or photo upload, auto-compressed), banner colour, About-me text, display name — with a live Discord-style profile card preview.</li>
+      <li><b>Sidebar user panel:</b> your avatar + name + @username pinned at the bottom of the sidebar with a gear button (like Discord's user panel).</li>
+      <li>Everything saves into your progress snapshot, so it syncs across devices with your account.</li>
+      <li>Old settings contents all moved into the new panes: theme &amp; colours → Appearance; goal &amp; target date → Study; password &amp; sign-out → My Account; update-cards toggle → Updates.</li>
+    </ul>
+    <p class="upx-stamp">Replaces the settings dialog at runtime — index.html untouched.</p>
+  </div>
+</section>
+
+<style>
+  .upx-user-panel{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:9px;margin-top:10px;padding:8px 10px;background:var(--subtle,rgba(120,130,160,.14));border-top:1px solid var(--line,#e3e4e8);border-radius:0 0 10px 10px;}
+  .upx-up-ava{width:34px;height:34px;border-radius:50%;flex:none;border:0;padding:0;overflow:hidden;background:var(--accent,#5865f2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;}
+  .upx-up-ava img{width:100%;height:100%;object-fit:cover;display:block;}
+  .upx-up-meta{flex:1;min-width:0;line-height:1.15;}
+  .upx-up-meta b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .upx-up-meta small{display:block;font-size:11px;color:var(--muted,#6b7078);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .upx-up-gear{background:none;border:0;color:var(--muted,#6b7078);cursor:pointer;padding:6px;border-radius:7px;display:flex;}
+  .upx-up-gear:hover{background:var(--subtle,rgba(120,130,160,.2));color:var(--text,#191b1f);}
+  #upx-ds{position:fixed;inset:0;z-index:9998;display:flex;background:var(--bg,#fff);}
+  #upx-ds .upx-ds-nav{width:230px;flex:none;overflow-y:auto;padding:26px 10px 20px;background:var(--subtle,rgba(120,130,160,.12));border-right:1px solid var(--line,#e3e4e8);}
+  #upx-ds .upx-ds-navhead{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--muted,#6b7078);margin:14px 10px 5px;text-transform:uppercase;}
+  #upx-ds .upx-ds-navhead:first-child{margin-top:0;}
+  #upx-ds .upx-ds-navbtn{display:block;width:100%;text-align:left;background:none;border:0;border-radius:6px;padding:7px 10px;margin:1px 0;font:inherit;font-size:14px;color:var(--muted,#6b7078);cursor:pointer;}
+  #upx-ds .upx-ds-navbtn:hover{background:var(--subtle,rgba(120,130,160,.2));color:var(--text,#191b1f);}
+  #upx-ds .upx-ds-navbtn.sel{background:var(--subtle,rgba(120,130,160,.26));color:var(--text,#191b1f);font-weight:600;}
+  #upx-ds .upx-ds-main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  #upx-ds .upx-ds-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 28px 10px;}
+  #upx-ds .upx-ds-head h2{margin:0;font-size:19px;}
+  #upx-ds .upx-ds-close{background:none;border:1px solid var(--line,#e3e4e8);border-radius:14px;color:var(--muted,#6b7078);font:inherit;font-size:11px;padding:4px 12px;cursor:pointer;}
+  #upx-ds .upx-ds-close:hover{color:var(--text,#191b1f);border-color:var(--muted,#6b7078);}
+  #upx-ds .upx-ds-pane{flex:1;overflow-y:auto;padding:8px 28px 40px;max-width:760px;}
+  #upx-ds .upx-ds-pane h3{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted,#6b7078);margin:20px 0 8px;border-bottom:1px solid var(--line,#e3e4e8);padding-bottom:5px;}
+  #upx-ds .upx-ds-pane label{display:block;font-size:13px;color:var(--muted,#6b7078);margin:10px 0 4px;}
+  #upx-ds .upx-ds-pane input[type=text],#upx-ds .upx-ds-pane input[type=date],#upx-ds .upx-ds-pane input[type=number],#upx-ds .upx-ds-pane input[type=password],#upx-ds .upx-ds-pane textarea{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line,#e3e4e8);border-radius:8px;font:inherit;background:var(--bg,#fff);color:var(--text,#191b1f);}
+  #upx-ds .upx-ds-pane textarea{min-height:64px;resize:vertical;}
+  #upx-ds .upx-ds-pane small{display:block;color:var(--muted,#6b7078);font-size:12px;margin-top:4px;}
+  .upx-pcard{border:1px solid var(--line,#e3e4e8);border-radius:12px;overflow:hidden;margin-top:6px;}
+  .upx-pcard-banner{height:84px;background:var(--upx-banner,#5865f2);}
+  .upx-pcard-body{position:relative;background:var(--subtle,rgba(120,130,160,.12));padding:38px 14px 14px;}
+  .upx-pcard-ava{position:absolute;top:-32px;left:14px;width:68px;height:68px;border-radius:50%;border:5px solid var(--bg,#fff);background:var(--accent,#5865f2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;}
+  .upx-pcard-ava img{width:100%;height:100%;object-fit:cover;display:block;}
+  .upx-pcard-body b{font-size:16px;display:block;}
+  .upx-pcard-body small{color:var(--muted,#6b7078);}
+  .upx-pcard-about{margin-top:10px;padding:9px 11px;border:1px solid var(--line,#e3e4e8);border-radius:8px;background:var(--bg,#fff);font-size:13px;white-space:pre-wrap;}
+  .upx-ava-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .upx-ava-opt{width:38px;height:38px;border-radius:50%;border:1px solid var(--line,#e3e4e8);background:var(--bg,#fff);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .upx-ava-opt.sel{border:2px solid var(--accent,#5865f2);}
+  .upx-hex-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .upx-hex{width:34px;height:34px;border-radius:8px;border:1px solid var(--line,#e3e4e8);cursor:pointer;}
+  .upx-hex.sel{outline:2px solid var(--accent,#5865f2);outline-offset:2px;}
+  .upx-ds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:9px;margin-top:6px;}
+  .upx-ds-mode{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line,#e3e4e8);border-radius:8px;background:var(--bg,#fff);color:var(--text,#191b1f);font:inherit;font-size:12px;cursor:pointer;text-align:left;}
+  .upx-ds-mode.sel{border:2px solid var(--accent,#5865f2);}
+  .upx-ds-swatch{display:flex;flex-direction:column;gap:5px;padding:6px;border:1px solid var(--line,#e3e4e8);border-radius:8px;background:var(--bg,#fff);color:var(--muted,#6b7078);font:inherit;font-size:10px;cursor:pointer;}
+  .upx-ds-swatch.sel{border:2px solid var(--accent,#5865f2);}
+  .upx-ds-swatch i{display:block;height:26px;border-radius:5px;background:linear-gradient(135deg,var(--swatch-a),var(--swatch-b) 55%,var(--swatch-c));}
+  @media (max-width:700px){#upx-ds .upx-ds-nav{width:150px;}#upx-ds .upx-ds-pane{padding:8px 16px 40px;}#upx-ds .upx-ds-head{padding:16px 16px 8px;}}
+</style>
+
+<script>
+  /* ---------- UPDATE 1.12 · Discord-style settings + profile system ---------- */
+  (function () {
+    'use strict';
+
+    var EMOJIS = ['😀', '😎', '🦊', '🐼', '🐯', '', '', '', '🦄', '🐝', '🌸', '', '⭐', '🔥', '', '', '', '✏️', '🧠', ''];
+    var BANNERS = ['#5865f2', '#286087', '#5d438f', '#9c435c', '#875516', '#48556b', '#9c4b5a', '#1f8b4c'];
+    var PALETTES = [
+      ['blurple', 'Blurple', '#e1e4ff', '#8391ff', '#5865f2'],
+      ['ocean', 'Ocean', '#c8e5f3', '#5b9ac7', '#286087'],
+      ['violet', 'Violet', '#e0d4f6', '#9779ce', '#5d438f'],
+      ['rose', 'Rose', '#f6d6df', '#d98298', '#9c435c'],
+      ['amber', 'Amber', '#f8e4b8', '#d49a3a', '#875516'],
+      ['slate', 'Slate', '#d7deea', '#8293ad', '#48556b'],
+      ['sunset', 'Sunset', '#ffd6bd', '#e98a67', '#9c4b5a']
+    ];
+    var CATS = [
+      { g: 'Account settings', items: [['profile', 'My Profile'], ['account', 'My Account']] },
+      { g: 'App settings', items: [['appearance', 'Appearance'], ['study', 'Study']] },
+      { g: 'Other', items: [['updates', 'Updates & Cards']] }
+    ];
+
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function P() { return (typeof store !== 'undefined' && store && store.profile) ? store.profile : {}; }
+    function save() { if (typeof commit === 'function') { try { commit(); } catch (e) {} } }
+    function uname() { return (typeof activeUsername !== 'undefined' && activeUsername) ? activeUsername : (P().name || 'learner'); }
+    function avaInner(big) {
+      var p = P();
+      if (p.avatar) return '<img src="' + p.avatar + '" alt="">';
+      if (p.avatarEmoji) return esc(p.avatarEmoji);
+      return esc((P().name || 'L').trim().charAt(0).toUpperCase() || 'L');
+    }
+
+    /* ---- sidebar user panel (Discord-style) ---- */
+    function injectUserPanel() {
+      var sb = document.getElementById('sidebar');
+      if (!sb || document.getElementById('upx-user-panel')) return;
+      var panel = document.createElement('div');
+      panel.className = 'upx-user-panel';
+      panel.id = 'upx-user-panel';
+      panel.innerHTML =
+        '<button type="button" class="upx-up-ava" data-upx12="open-settings" aria-label="Open settings">' + avaInner() + '</button>' +
+        '<div class="upx-up-meta"><b>' + esc(P().name || 'Learner') + '</b><small>@' + esc(uname()) + '</small></div>' +
+        '<button type="button" class="upx-up-gear" data-upx12="open-settings" aria-label="Settings">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h0a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h0a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v0a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg></button>';
+      sb.appendChild(panel);
+    }
+    function refreshUserPanel() {
+      var old = document.getElementById('upx-user-panel');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      injectUserPanel();
+    }
+
+    /* ---- panes ---- */
+    function pcardHTML() {
+      var p = P();
+      var banner = p.banner || '#5865f2';
+      return '<div class="upx-pcard" style="--upx-banner:' + banner + '">' +
+        '<div class="upx-pcard-banner"></div><div class="upx-pcard-body">' +
+        '<div class="upx-pcard-ava">' + avaInner(true) + '</div>' +
+        '<b>' + esc(p.name || 'Learner') + '</b><small>@' + esc(uname()) + '</small>' +
+        (p.about ? '<div class="upx-pcard-about">' + esc(p.about) + '</div>' : '') +
+        '</div></div>';
+    }
+    function paneProfile() {
+      var p = P();
+      return pcardHTML() +
+        '<h3>Display name</h3>' +
+        '<input type="text" id="upx-ds-name" maxlength="40" value="' + esc(p.name || '') + '" placeholder="Your name">' +
+        '<h3>About me</h3>' +
+        '<textarea id="upx-ds-about" maxlength="190" placeholder="A short line about you…">' + esc(p.about || '') + '</textarea>' +
+        '<small>' + String(p.about || '').length + '/190</small>' +
+        '<h3>Avatar</h3>' +
+        '<div class="upx-ava-row">' + EMOJIS.map(function (em) {
+          return '<button type="button" class="upx-ava-opt' + (p.avatarEmoji === em && !p.avatar ? ' sel' : '') + '" data-upx12="avatar-emoji" data-emoji="' + em + '">' + em + '</button>';
+        }).join('') +
+        '<button type="button" class="upx-ava-opt" data-upx12="avatar-upload" title="Upload a photo" style="font-size:14px">📷</button>' +
+        '<button type="button" class="upx-ava-opt" data-upx12="avatar-remove" title="Remove avatar" style="font-size:14px">✖</button>' +
+        '</div><input type="file" id="upx-ds-file" accept="image/*" hidden>' +
+        '<small>Photos are shrunk to 128×128 automatically.</small>' +
+        '<h3>Profile colour (banner)</h3>' +
+        '<div class="upx-hex-row">' + BANNERS.map(function (h) {
+          return '<button type="button" class="upx-hex' + ((p.banner || '#5865f2') === h ? ' sel' : '') + '" data-upx12="banner" data-hex="' + h + '" style="background:' + h + '" aria-label="Banner ' + h + '"></button>';
+        }).join('') + '</div>';
+    }
+
+    function paneAccount() {
+      var u = (typeof cloudUser !== 'undefined' && cloudUser) ? cloudUser : null;
+      var html = '<h3>Account</h3>' +
+        '<label>Email</label><input type="text" readonly value="' + esc(u ? u.email : '(not signed in)') + '">' +
+        '<label>Username</label><input type="text" readonly value="@' + esc(uname()) + '">' +
+        '<small>Username comes from your account and is used on the leaderboard.</small>';
+      if (u) {
+        html += '<h3>Change password</h3>' +
+          '<div class="upx-btnrow" style="margin:6px 0"><button type="button" class="button" data-upx11="pw-toggle">Change password</button></div>' +
+          '<div id="upx-pw-box" hidden>' +
+          '<label for="upx-pw-new">New password (min 8 characters)</label>' +
+          '<input id="upx-pw-new" type="password" autocomplete="new-password">' +
+          '<label for="upx-pw-confirm">Confirm new password</label>' +
+          '<input id="upx-pw-confirm" type="password" autocomplete="new-password">' +
+          '<div class="upx-btnrow"><button type="button" class="button" data-upx11="pw-send">Update password</button></div>' +
+          '<small id="upx-pw-note" class="upx-note"></small></div>' +
+          '<h3>Session</h3>' +
+          '<div class="upx-btnrow"><button type="button" class="button" data-upx12="signout" style="background:transparent;color:#c62828;border:1px solid #c62828">Log Out</button></div>';
+      } else {
+        html += '<small>Sign in from the account screen to manage your password here.</small>';
+      }
+      return html;
+    }
+
+    function paneAppearance() {
+      var p = P();
+      var follow = p.followDeviceTheme === true;
+      var mode = follow ? 'device' : (p.theme === 'dark' ? 'dark' : 'light');
+      return '<h3>Theme mode</h3><div class="upx-ds-grid">' +
+        [['light', 'Light'], ['dark', 'Dark'], ['device', 'Same as device']].map(function (m) {
+          return '<button type="button" class="upx-ds-mode' + (mode === m[0] ? ' sel' : '') + '" data-upx12="mode" data-mode="' + m[0] + '"><span class="mode-preview mode-' + (m[0] === 'device' ? 'light' : m[0]) + '"></span>' + m[1] + '</button>';
+        }).join('') + '</div>' +
+        '<h3>Colour theme</h3><div class="upx-ds-grid">' +
+        PALETTES.map(function (s) {
+          return '<button type="button" class="upx-ds-swatch' + ((p.palette || 'blurple') === s[0] ? ' sel' : '') + '" data-upx12="palette" data-pal="' + s[0] + '" style="--swatch-a:' + s[2] + ';--swatch-b:' + s[3] + ';--swatch-c:' + s[4] + '"><i></i><span>' + s[1] + '</span></button>';
+        }).join('') + '</div>';
+    }
+
+    function paneStudy() {
+      var p = P();
+      return '<h3>Goals</h3>' +
+        '<label for="upx-ds-goal">Daily topic goal</label>' +
+        '<input type="number" id="upx-ds-goal" min="1" max="30" value="' + esc(p.dailyGoal == null ? 5 : p.dailyGoal) + '">' +
+        '<small>Just a gentle nudge, not a deadline.</small>' +
+        '<label for="upx-ds-target">My planning target (optional)</label>' +
+        '<input type="date" id="upx-ds-target" value="' + esc(p.targetDate || '') + '">' +
+        '<small>Your personal target, not an official SSC examination date.</small>';
+    }
+
+    function paneUpdates() {
+      var on = (function () { try { return localStorage.getItem('upxShowCards') === '1'; } catch (e) { return false; } })();
+      return '<h3>Update info cards</h3>' +
+        '<label style="display:flex;align-items:center;gap:9px;margin:4px 0"><input type="checkbox" id="upx-cards-toggle"' + (on ? ' checked' : '') + ' style="width:auto"> Show the update history cards on the public page</label>' +
+        '<small>Off by default so visitors see a clean tracker.</small>' +
+        '<h3>Installed updates</h3><small>1.0 loader · 1.1 admin · 1.2 data-fix · 1.3 videos · 1.4 UI · 1.5 auth list · 1.6 auth buttons · 1.7 auth order · 1.8 create-first · 1.9 zero-flash · 1.10 syllabus prune · 1.11 passwords · 1.12 profiles &amp; settings</small>';
+    }
+
+    var currentCat = 'profile';
+    function paneHTML(cat) {
+      if (cat === 'account') return paneAccount();
+      if (cat === 'appearance') return paneAppearance();
+      if (cat === 'study') return paneStudy();
+      if (cat === 'updates') return paneUpdates();
+      return paneProfile();
+    }
+    function catTitle(cat) {
+      for (var i = 0; i < CATS.length; i++) for (var j = 0; j < CATS[i].items.length; j++) if (CATS[i].items[j][0] === cat) return CATS[i].items[j][1];
+      return 'My Profile';
+    }
+
+    function renderDS() {
+      var ds = document.getElementById('upx-ds');
+      if (!ds) return;
+      ds.querySelector('.upx-ds-nav').innerHTML = CATS.map(function (g) {
+        return '<div class="upx-ds-navhead">' + g.g + '</div>' + g.items.map(function (it) {
+          return '<button type="button" class="upx-ds-navbtn' + (it[0] === currentCat ? ' sel' : '') + '" data-upx12="nav" data-cat="' + it[0] + '">' + it[1] + '</button>';
+        }).join('');
+      }).join('');
+      ds.querySelector('.upx-ds-head h2').textContent = catTitle(currentCat);
+      ds.querySelector('#upx-ds-pane').innerHTML = paneHTML(currentCat);
+    }
+
+    function openSettings(cat) {
+      if (document.getElementById('upx-ds')) { if (cat) { currentCat = cat; renderDS(); } return; }
+      currentCat = cat || 'profile';
+      var wrap = document.createElement('div');
+      wrap.id = 'upx-ds';
+      wrap.setAttribute('role', 'dialog');
+      wrap.setAttribute('aria-modal', 'true');
+      wrap.innerHTML = '<nav class="upx-ds-nav" aria-label="Settings categories"></nav>' +
+        '<div class="upx-ds-main"><div class="upx-ds-head"><h2></h2>' +
+        '<button type="button" class="upx-ds-close" data-upx12="close">ESC</button></div>' +
+        '<div class="upx-ds-pane" id="upx-ds-pane"></div></div>';
+      document.body.appendChild(wrap);
+      renderDS();
+      document.addEventListener('keydown', dsKey, true);
+    }
+    function closeSettings() {
+      var ds = document.getElementById('upx-ds');
+      if (ds && ds.parentNode) ds.parentNode.removeChild(ds);
+      document.removeEventListener('keydown', dsKey, true);
+    }
+    function dsKey(ev) { if (ev.key === 'Escape') { ev.stopPropagation(); closeSettings(); } }
+
+    /* ---- profile edits ---- */
+    var saveTimer = null;
+    function refreshProfilePreview() {
+      var ds = document.getElementById('upx-ds');
+      if (!ds) return;
+      var card = ds.querySelector('.upx-pcard');
+      if (card) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = pcardHTML();
+        card.parentNode.replaceChild(tmp.firstChild, card);
+      }
+      var ta = document.getElementById('upx-ds-about');
+      if (ta && ta.nextElementSibling) ta.nextElementSibling.textContent = String(P().about || '').length + '/190';
+    }
+    function debouncedSave(fn) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () { fn(); save(); refreshUserPanel(); refreshProfilePreview(); }, 350);
+    }
+
+    function compressAvatar(file, cb) {
+      if (!file || !/^image\//.test(file.type)) return;
+      if (file.size > 6 * 1024 * 1024) { alert('Image too large (max 6 MB).'); return; }
+      var fr = new FileReader();
+      fr.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var c = document.createElement('canvas');
+          c.width = 128; c.height = 128;
+          var g = c.getContext('2d');
+          var side = Math.min(img.width, img.height);
+          g.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 128, 128);
+          cb(c.toDataURL('image/jpeg', 0.82));
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    }
+
+    /* ---- events ---- */
+    document.addEventListener('click', function (ev) {
+      var t = ev.target && ev.target.closest ? ev.target.closest('[data-upx12]') : null;
+      if (!t) return;
+      var act = t.getAttribute('data-upx12');
+      var p = P();
+      if (act === 'open-settings') { openSettings(); }
+      else if (act === 'close') { closeSettings(); }
+      else if (act === 'nav') { currentCat = t.getAttribute('data-cat'); renderDS(); }
+      else if (act === 'signout') { closeSettings(); if (typeof cloudSignOut === 'function') cloudSignOut(); }
+      else if (act === 'avatar-emoji') { p.avatarEmoji = t.getAttribute('data-emoji'); p.avatar = ''; save(); refreshUserPanel(); renderDS(); }
+      else if (act === 'avatar-remove') { p.avatarEmoji = ''; p.avatar = ''; save(); refreshUserPanel(); renderDS(); }
+      else if (act === 'avatar-upload') { var f = document.getElementById('upx-ds-file'); if (f) f.click(); }
+      else if (act === 'banner') { p.banner = t.getAttribute('data-hex'); save(); renderDS(); }
+      else if (act === 'mode') {
+        var m = t.getAttribute('data-mode');
+        p.followDeviceTheme = (m === 'device');
+        if (m !== 'device') p.theme = m;
+        save(); if (typeof applyTheme === 'function') applyTheme(); renderDS();
+      }
+      else if (act === 'palette') { p.palette = t.getAttribute('data-pal'); save(); if (typeof applyTheme === 'function') applyTheme(); renderDS(); }
+    }, true);
+
+    document.addEventListener('change', function (ev) {
+      var id = ev.target && ev.target.id;
+      var p = P();
+      if (id === 'upx-ds-file') {
+        compressAvatar(ev.target.files && ev.target.files[0], function (dataUrl) {
+          p.avatar = dataUrl; p.avatarEmoji = ''; save(); refreshUserPanel(); renderDS();
+        });
+        ev.target.value = '';
+      } else if (id === 'upx-ds-goal') {
+        var v = parseInt(ev.target.value, 10);
+        if (isNaN(v) || v < 1) v = 1; if (v > 30) v = 30;
+        p.dailyGoal = v; save(); if (typeof render === 'function') render();
+      } else if (id === 'upx-ds-target') {
+        p.targetDate = ev.target.value || ''; save(); if (typeof render === 'function') render();
+      } else if (id === 'upx-cards-toggle') {
+        try { localStorage.setItem('upxShowCards', ev.target.checked ? '1' : '0'); } catch (e) {}
+        var show = ev.target.checked;
+        ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12'].forEach(function (cid) {
+          var el = document.getElementById(cid); if (el) el.style.display = show ? '' : 'none';
+        });
+      }
+    }, true);
+
+    document.addEventListener('input', function (ev) {
+      var id = ev.target && ev.target.id;
+      var p = P();
+      if (id === 'upx-ds-name') { debouncedSave(function () { p.name = ev.target.value; }); }
+      else if (id === 'upx-ds-about') { debouncedSave(function () { p.about = ev.target.value; }); }
+    }, true);
+
+    /* ---- boot ---- */
+    if (typeof window.settingsDialog === 'function') window.SSC_UI12_APP_SETTINGS = window.settingsDialog;
+    window.settingsDialog = function () { openSettings(); };
+
+    injectUserPanel();
+    setTimeout(injectUserPanel, 400);
+    window.addEventListener('load', injectUserPanel);
+    var sb = document.getElementById('sidebar');
+    if (sb && 'MutationObserver' in window) {
+      new MutationObserver(function () { if (!document.getElementById('upx-user-panel')) injectUserPanel(); }).observe(sb, { childList: true });
+    }
+
+    window.SSC_UI12 = { openSettings: openSettings, closeSettings: closeSettings, refreshUserPanel: refreshUserPanel };
+    console.info('[ui-1.12] discord-style settings + profile system ready');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.13 · paste the next section here ====================
+<section class="upx-section" data-version="1.13" id="update-1-13"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a542c723d89f7ccd',t:'MTc5MzYxODcxOQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a542c723d89f7ccd',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
