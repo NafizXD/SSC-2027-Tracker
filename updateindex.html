@@ -41,6 +41,12 @@
             pane entrance animations, category icons in nav, online status
             dots, "SSC 2027" badge chip, Discord-style toggle switch, round
             ✕ close button, dotted texture backdrop, reduced-motion support.
+     v1.15→ SOCIAL PROFILES + PRIVACY/DEV SYSTEM: click any leaderboard row
+            → profile modal (public topics-finished count + "View Detailed
+            Progress"); profiles.is_private / is_developer / topics_finished_count
+            columns; privacy switch in My Account; "Developer Option" nav tab
+            with redeem code Developer1002 → permanent dev mode (Supabase RPC);
+            devs bypass privacy. Requires supabase-migration-1.15.sql.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -815,7 +821,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14', 'update-1-15'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1495,7 +1501,7 @@
     var CATS = [
       { g: 'Account settings', items: [['profile', 'My Profile'], ['account', 'My Account']] },
       { g: 'App settings', items: [['appearance', 'Appearance'], ['study', 'Study']] },
-      { g: 'Other', items: [['updates', 'Updates & Cards']] }
+      { g: 'Other', items: [['updates', 'Developer Option']] }
     ];
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -1569,7 +1575,11 @@
         '<label>Username</label><input type="text" readonly value="@' + esc(uname()) + '">' +
         '<small>Username comes from your account and is used on the leaderboard.</small>';
       if (u) {
-        html += '<h3>Change password</h3>' +
+        var priv15 = (window.SSC_SOCIAL15 && window.SSC_SOCIAL15.me) ? (window.SSC_SOCIAL15.me.is_private !== false) : true;
+        html += '<h3>Privacy</h3>' +
+          '<label style="display:flex;align-items:center;gap:9px;margin:6px 0;cursor:pointer"><input type="checkbox" id="upx-priv-toggle"' + (priv15 ? ' checked' : '') + ' style="width:auto"> Keep my detailed progress private</label>' +
+          '<small>ON = only you and developers can open your detailed progress. Your finished-topics count on the leaderboard stays public either way.</small>' +
+          '<h3>Change password</h3>' +
           '<div class="upx-btnrow" style="margin:6px 0"><button type="button" class="button" data-upx11="pw-toggle">Change password</button></div>' +
           '<div id="upx-pw-box" hidden>' +
           '<label for="upx-pw-new">New password (min 8 characters)</label>' +
@@ -1613,10 +1623,18 @@
 
     function paneUpdates() {
       var on = (function () { try { return localStorage.getItem('upxShowCards') === '1'; } catch (e) { return false; } })();
-      return '<h3>Update info cards</h3>' +
+      var dev15 = !!(window.SSC_SOCIAL15 && window.SSC_SOCIAL15.me && window.SSC_SOCIAL15.me.is_developer);
+      var devBlock = '<h3>Developer mode</h3>' +
+        '<small id="upx-dev-status">Status: ' + (dev15 ? 'ACTIVE — privacy barriers are bypassed for you' : 'not active') + '</small>' +
+        (dev15 ? '' :
+          '<div class="upx-btnrow" style="margin:9px 0"><input type="text" id="upx-dev-code" placeholder="Redeem code" autocomplete="off" style="flex:1;min-width:140px">' +
+          '<button type="button" class="button" data-upx15="dev-redeem">Redeem</button></div>' +
+          '<small id="upx-dev-note" class="upx-note"></small>') +
+        '<h3>Update info cards</h3>' +
         '<label style="display:flex;align-items:center;gap:9px;margin:4px 0"><input type="checkbox" id="upx-cards-toggle"' + (on ? ' checked' : '') + ' style="width:auto"> Show the update history cards on the public page</label>' +
         '<small>Off by default so visitors see a clean tracker.</small>' +
-        '<h3>Installed updates</h3><small>1.0 loader · 1.1 admin · 1.2 data-fix · 1.3 videos · 1.4 UI · 1.5 auth list · 1.6 auth buttons · 1.7 auth order · 1.8 create-first · 1.9 zero-flash · 1.10 syllabus prune · 1.11 passwords · 1.12 profiles &amp; settings</small>';
+        '<h3>Installed updates</h3><small>1.0 loader · 1.1 admin · 1.2 data-fix · 1.3 videos · 1.4 UI · 1.5 auth list · 1.6 auth buttons · 1.7 auth order · 1.8 create-first · 1.9 zero-flash · 1.10 syllabus prune · 1.11 passwords · 1.12 profiles &amp; settings · 1.13-1.14 glow-up · 1.15 social &amp; privacy</small>';
+      return devBlock;
     }
 
     var currentCat = 'profile';
@@ -1891,8 +1909,281 @@
   }
 </style>
 
-<!-- ==================== UPDATE 1.15 · paste the next section here ====================
-<section class="upx-section" data-version="1.15" id="update-1-15"> … </section>
+<!-- ==================== UPDATE 1.15 · SOCIAL PROFILES + PRIVACY/DEV ==================== -->
+<section class="upx-section" data-version="1.15" id="update-1-15">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.15</span>
+    <h2>Leaderboard social profiles + privacy &amp; developer system</h2>
+    <ul class="upx-glist">
+      <li><b>Click any leaderboard row</b> → profile popup: banner/avatar card, @username, DEV &amp; PRIVATE chips, and the always-public <b>topics finished</b> count.</li>
+      <li><b>"View Detailed Progress"</b> section inside the popup: per-subject progress bars + last sync — visible when the owner made it public, when it's your own profile, or when you are a developer.</li>
+      <li><b>Privacy:</b> every account starts <code>is_private = true</code>; toggle it in Settings → My Account → Privacy. The finished-topics count stays public either way.</li>
+      <li><b>Developer Option</b> (renamed nav tab): redeem code <code>Developer1002</code> → Supabase RPC flips <code>is_developer = true</code> permanently; developers can open anyone's detailed progress.</li>
+      <li>Your own <code>topics_finished_count</code> is published to Supabase automatically as you tick topics.</li>
+    </ul>
+    <p class="upx-stamp">Backend: run supabase-migration-1.15.sql in the Supabase SQL editor once.</p>
+  </div>
+</section>
+
+<style>
+  .leaderboard-row{cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;}
+  .leaderboard-row:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent,#5865f2) 55%,var(--line,#e3e4e8));box-shadow:0 8px 22px color-mix(in srgb,var(--accent,#5865f2) 22%,transparent);}
+  #upx-social{position:fixed;inset:0;z-index:9997;background:rgba(8,10,16,.55);display:flex;align-items:center;justify-content:center;padding:16px;}
+  .upx-soc-card{width:min(94vw,520px);max-height:88vh;overflow-y:auto;background:var(--bg,#fff);color:var(--text,#191b1f);border:1px solid color-mix(in srgb,var(--accent,#5865f2) 35%,var(--line,#e3e4e8));border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.45);animation:upxIn .25s both;}
+  .upx-soc-banner{height:88px;background-image:radial-gradient(120% 100% at 88% -20%,rgba(255,255,255,.4),rgba(255,255,255,0) 55%),linear-gradient(135deg,var(--upx-banner,#5865f2),color-mix(in srgb,var(--upx-banner,#5865f2) 60%,var(--accent,#5865f2)));background-size:180% 180%;animation:upxBanner 8s ease-in-out infinite alternate;border-radius:16px 16px 0 0;}
+  .upx-soc-body{position:relative;padding:40px 18px 18px;}
+  .upx-soc-ava{position:absolute;top:-34px;left:18px;width:72px;height:72px;border-radius:50%;border:5px solid var(--bg,#fff);background:var(--accent,#5865f2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;box-shadow:0 0 0 3px var(--accent,#5865f2),0 0 18px color-mix(in srgb,var(--accent,#5865f2) 55%,transparent);}
+  .upx-soc-ava img{width:100%;height:100%;object-fit:cover;}
+  .upx-soc-name{font-size:18px;font-weight:700;}
+  .upx-soc-sub{color:var(--muted,#6b7078);font-size:13px;}
+  .upx-chip{display:inline-block;margin-left:7px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.4px;vertical-align:2px;color:#fff;}
+  .upx-chip.dev{background:linear-gradient(90deg,#7c3aed,#db2777);box-shadow:0 0 10px rgba(219,39,119,.5);}
+  .upx-chip.priv{background:#6b7078;}
+  .upx-chip.pub{background:#1a7f37;}
+  .upx-soc-metrics{display:flex;gap:10px;margin:14px 0 4px;flex-wrap:wrap;}
+  .upx-soc-metric{flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--line,#e3e4e8);border-radius:10px;background:color-mix(in srgb,var(--accent,#5865f2) 6%,var(--bg,#fff));}
+  .upx-soc-metric b{display:block;font-size:20px;color:var(--accent,#5865f2);}
+  .upx-soc-metric small{color:var(--muted,#6b7078);}
+  .upx-soc-about{margin-top:10px;padding:9px 11px;border:1px solid var(--line,#e3e4e8);border-radius:10px;font-size:13px;white-space:pre-wrap;background:color-mix(in srgb,var(--accent,#5865f2) 5%,var(--bg,#fff));}
+  .upx-soc-sec{margin-top:16px;padding-top:10px;border-top:1px solid var(--line,#e3e4e8);}
+  .upx-soc-sec h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent,#5865f2);}
+  .upx-bar-row{margin:7px 0;}
+  .upx-bar-row small{display:flex;justify-content:space-between;color:var(--muted,#6b7078);font-size:12px;margin-bottom:3px;}
+  .upx-bar{height:8px;border-radius:6px;background:var(--line,#e3e4e8);overflow:hidden;}
+  .upx-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent,#5865f2),color-mix(in srgb,var(--accent,#5865f2) 55%,#ff8fab));box-shadow:0 0 8px color-mix(in srgb,var(--accent,#5865f2) 45%,transparent);}
+  .upx-lock{padding:14px;border:1px dashed var(--line,#e3e4e8);border-radius:10px;color:var(--muted,#6b7078);font-size:13px;text-align:center;}
+  .upx-soc-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.35);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+</style>
+
+<script>
+  /* ---------- UPDATE 1.15 · social profiles + privacy/developer system ---------- */
+  (function () {
+    'use strict';
+    var me = { is_private: true, is_developer: false, count: 0, loaded: false };
+    window.SSC_SOCIAL15 = { me: me, openProfile: openProfile, refreshMe: refreshMe };
+
+    function client() { return (typeof cloudClient !== 'undefined' && cloudClient) ? cloudClient : null; }
+    function user() { return (typeof cloudUser !== 'undefined' && cloudUser) ? cloudUser : null; }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function finishedCount() {
+      try {
+        var set = {};
+        var ch = (typeof store !== 'undefined' && store && store.chapters) ? store.chapters : {};
+        Object.keys(ch).forEach(function (k) {
+          var d = ch[k] && ch[k].done;
+          if (Array.isArray(d)) d.forEach(function (t) { set[t] = 1; });
+        });
+        return Object.keys(set).length;
+      } catch (e) { return 0; }
+    }
+
+    /* ---- own row: refresh + publish topics_finished_count ---- */
+    var lastPub = -1;
+    function publishCount() {
+      var c = client(), u = user();
+      if (!c || !u) return;
+      var n = finishedCount();
+      if (n === lastPub) return;
+      lastPub = n;
+      c.from('profiles').update({ topics_finished_count: n }).eq('id', u.id).then(function (r) {
+        if (r && r.error) lastPub = -1;
+        else me.count = n;
+      });
+    }
+    function refreshMe() {
+      var c = client(), u = user();
+      if (!c || !u) return;
+      c.from('profiles').select('id,username,is_private,is_developer,topics_finished_count').eq('id', u.id).maybeSingle().then(function (r) {
+        if (r && r.data) {
+          me.is_private = r.data.is_private !== false;
+          me.is_developer = r.data.is_developer === true;
+          me.count = Number(r.data.topics_finished_count) || 0;
+          me.loaded = true;
+          publishCount();
+          var st = document.getElementById('upx-dev-status');
+          if (st) st.textContent = 'Status: ' + (me.is_developer ? 'ACTIVE — privacy barriers are bypassed for you' : 'not active');
+          var pt = document.getElementById('upx-priv-toggle');
+          if (pt) pt.checked = me.is_private;
+        }
+      });
+    }
+    setInterval(function () { if (user()) { publishCount(); } }, 20000);
+    setInterval(function () { if (user() && !document.getElementById('upx-ds')) refreshMe(); }, 60000);
+    setTimeout(refreshMe, 2500);
+    window.addEventListener('load', function () { setTimeout(refreshMe, 1500); });
+    if (typeof window.commit === 'function') {
+      var origCommit = window.commit, pt2 = null;
+      window.commit = function () {
+        var r = origCommit.apply(this, arguments);
+        clearTimeout(pt2); pt2 = setTimeout(publishCount, 1800);
+        return r;
+      };
+    }
+
+    /* ---- leaderboard click → profile modal ---- */
+    document.addEventListener('click', function (ev) {
+      var row = ev.target && ev.target.closest ? ev.target.closest('.leaderboard-row') : null;
+      if (!row) return;
+      var uname = '';
+      var list = row.parentNode ? Array.prototype.slice.call(row.parentNode.children) : [];
+      var idx = list.indexOf(row);
+      if (typeof leaderboardRows !== 'undefined' && leaderboardRows && leaderboardRows[idx]) {
+        uname = leaderboardRows[idx].username || leaderboardRows[idx].display_name || '';
+      }
+      if (!uname) {
+        var nEl = row.querySelector('.leaderboard-name');
+        if (nEl) uname = (nEl.childNodes[0] && nEl.childNodes[0].textContent || nEl.textContent).trim();
+      }
+      if (uname) openProfile(uname);
+    }, true);
+
+    /* ---- profile modal ---- */
+    function openProfile(username) {
+      var c = client();
+      if (!c) { if (typeof authFeedback === 'function') authFeedback('Sign in to view profiles.', 'error'); return; }
+      c.from('profiles').select('id,username,is_private,is_developer,topics_finished_count').eq('username', username).maybeSingle().then(function (r) {
+        var row = (r && r.data) ? r.data : { id: null, username: username, is_private: true, is_developer: false, topics_finished_count: null };
+        buildModal(row);
+      });
+    }
+
+    function buildModal(row) {
+      closeSocial();
+      var u = user();
+      var isMe = !!u && String(row.username).toLowerCase() === String(typeof activeUsername !== 'undefined' ? activeUsername : '').toLowerCase();
+      var canSee = me.is_developer || row.is_private === false || isMe;
+      var wrap = document.createElement('div');
+      wrap.id = 'upx-social';
+      wrap.innerHTML =
+        '<div class="upx-soc-card" role="dialog" aria-modal="true" aria-label="Profile of ' + esc(row.username) + '">' +
+        '<button type="button" class="upx-soc-close" data-upx15="soc-close" aria-label="Close">✕</button>' +
+        '<div class="upx-soc-banner" id="upx-soc-banner"></div>' +
+        '<div class="upx-soc-body">' +
+        '<div class="upx-soc-ava" id="upx-soc-ava">' + esc(String(row.username || 'L').charAt(0).toUpperCase()) + '</div>' +
+        '<div class="upx-soc-name">' + esc(row.username) +
+        (row.is_developer ? '<span class="upx-chip dev">DEV</span>' : '') +
+        (row.is_private === false ? '<span class="upx-chip pub">PUBLIC</span>' : '<span class="upx-chip priv">PRIVATE</span>') +
+        '</div>' +
+        '<div class="upx-soc-sub" id="upx-soc-displayname">@' + esc(row.username) + '</div>' +
+        '<div class="upx-soc-metrics">' +
+        '<div class="upx-soc-metric"><b>' + (row.topics_finished_count == null ? '—' : Number(row.topics_finished_count).toLocaleString()) + '</b><small>topics finished (public)</small></div>' +
+        '<div class="upx-soc-metric"><b>' + (row.is_private === false ? 'Public' : 'Private') + '</b><small>detailed progress</small></div>' +
+        '</div>' +
+        '<div id="upx-soc-about"></div>' +
+        '<div class="upx-soc-sec"><h4>View Detailed Progress</h4><div id="upx-soc-detail"><div class="upx-lock">Loading…</div></div></div>' +
+        '</div></div>';
+      document.body.appendChild(wrap);
+      wrap.addEventListener('click', function (ev) { if (ev.target === wrap) closeSocial(); });
+
+      var detailBox = document.getElementById('upx-soc-detail');
+      if (!canSee) {
+        detailBox.innerHTML = '<div class="upx-lock">🔒 This learner\'s detailed progress is private.' +
+          (me.is_developer ? '' : '<br><small>Only they — or a developer — can open it.</small>') + '</div>';
+        return;
+      }
+      client().rpc('get_user_progress', { target: row.id }).then(function (r) {
+        var snap = r && r.data;
+        if (r && r.error) { detailBox.innerHTML = '<div class="upx-lock">Could not load progress: ' + esc(r.error.message) + '</div>'; return; }
+        if (!snap) { detailBox.innerHTML = '<div class="upx-lock">No progress snapshot yet.</div>'; return; }
+        renderCosmetics(snap);
+        detailBox.innerHTML = detailHTML(snap);
+      });
+    }
+
+    function renderCosmetics(snap) {
+      var p = (snap && snap.profile) ? snap.profile : null;
+      if (!p) return;
+      var banner = document.getElementById('upx-soc-banner');
+      if (banner && p.banner) banner.style.setProperty('--upx-banner', p.banner);
+      var ava = document.getElementById('upx-soc-ava');
+      if (ava) ava.innerHTML = p.avatar ? '<img src="' + p.avatar + '" alt="">' : (p.avatarEmoji ? esc(p.avatarEmoji) : ava.innerHTML);
+      var dn = document.getElementById('upx-soc-displayname');
+      if (dn && p.name) { var handle = dn.textContent.replace(/^@/, ''); dn.textContent = p.name + ' · @' + handle; }
+      var ab = document.getElementById('upx-soc-about');
+      if (ab && p.about) ab.innerHTML = '<div class="upx-soc-about">' + esc(p.about) + '</div>';
+    }
+
+    function detailHTML(snap) {
+      var done = {};
+      (snap.completed_topics || []).forEach(function (t) { done[t] = 1; });
+      var ch = snap.chapters || {};
+      Object.keys(ch).forEach(function (k) {
+        var d = ch[k] && ch[k].done;
+        if (Array.isArray(d)) d.forEach(function (t) { done[t] = 1; });
+      });
+      var rowsHtml = '';
+      var totAll = 0, hitAll = 0;
+      if (typeof DATA !== 'undefined' && Array.isArray(DATA)) {
+        DATA.forEach(function (s) {
+          var tot = 0, hit = 0;
+          (s.chapters || []).forEach(function (c) {
+            (c.topics || []).forEach(function (t) { tot++; if (done[t.id]) hit++; });
+          });
+          totAll += tot; hitAll += hit;
+          var pct = tot ? Math.round(hit / tot * 100) : 0;
+          rowsHtml += '<div class="upx-bar-row"><small><span>' + esc(s.bn || s.name) + '</span><span>' + hit + '/' + tot + '</span></small>' +
+            '<div class="upx-bar"><i style="width:' + pct + '%"></i></div></div>';
+        });
+      }
+      var upd = snap.updatedAt ? String(snap.updatedAt).slice(0, 10) : '—';
+      return '<div class="upx-soc-metrics" style="margin:0 0 8px"><div class="upx-soc-metric"><b>' + hitAll.toLocaleString() + '</b><small>of ' + totAll.toLocaleString() + ' topics in snapshot</small></div>' +
+        '<div class="upx-soc-metric"><b>' + esc(upd) + '</b><small>last sync</small></div></div>' + rowsHtml +
+        (me.is_developer ? '<small class="upx-note">Shown via developer override.</small>' : '');
+    }
+
+    function closeSocial() {
+      var w = document.getElementById('upx-social');
+      if (w && w.parentNode) w.parentNode.removeChild(w);
+    }
+
+    /* ---- settings wiring: privacy toggle + dev redeem ---- */
+    document.addEventListener('change', function (ev) {
+      if (ev.target && ev.target.id === 'upx-priv-toggle') {
+        var c = client(), u = user();
+        if (!c || !u) return;
+        var val = ev.target.checked;
+        c.from('profiles').update({ is_private: val }).eq('id', u.id).then(function (r) {
+          if (r && r.error) { ev.target.checked = !val; if (typeof authFeedback === 'function') authFeedback('Could not save privacy: ' + r.error.message, 'error'); return; }
+          me.is_private = val;
+          if (typeof authFeedback === 'function') authFeedback(val ? 'Detailed progress is now private.' : 'Detailed progress is now public.', 'success');
+        });
+      }
+    }, true);
+
+    document.addEventListener('click', function (ev) {
+      var t = ev.target && ev.target.closest ? ev.target.closest('[data-upx15]') : null;
+      if (!t) return;
+      var act = t.getAttribute('data-upx15');
+      if (act === 'soc-close') { closeSocial(); return; }
+      if (act === 'dev-redeem') {
+        var note = document.getElementById('upx-dev-note');
+        var code = String((document.getElementById('upx-dev-code') || {}).value || '').trim();
+        var c = client(), u = user();
+        if (!c || !u) { if (note) { note.className = 'upx-note err'; note.textContent = 'Sign in first.'; } return; }
+        if (!code) { if (note) { note.className = 'upx-note err'; note.textContent = 'Enter a redeem code.'; } return; }
+        if (note) { note.className = 'upx-note'; note.textContent = 'Checking…'; }
+        c.rpc('redeem_developer_code', { code: code }).then(function (r) {
+          if (r && r.error) { if (note) { note.className = 'upx-note err'; note.textContent = r.error.message; } return; }
+          if (r && r.data === true) {
+            me.is_developer = true;
+            if (note) { note.className = 'upx-note ok'; note.textContent = 'Developer mode activated ✔ Permanent on this account.'; }
+            setTimeout(refreshMe, 500);
+          } else if (note) { note.className = 'upx-note err'; note.textContent = 'Invalid code.'; }
+        });
+      }
+    }, true);
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && document.getElementById('upx-social')) { ev.stopPropagation(); closeSocial(); }
+    }, true);
+
+    console.info('[social-1.15] leaderboard profiles + privacy/dev system ready');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.16 · paste the next section here ====================
+<section class="upx-section" data-version="1.16" id="update-1-16"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a5447fa2acbe136b',t:'MTc5MzYzNjc2Mg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a5447fa2acbe136b',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
