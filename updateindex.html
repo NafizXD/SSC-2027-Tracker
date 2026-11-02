@@ -37,6 +37,10 @@
      v1.13→ VISUAL GLOW-UP: gradient banners & nav, accent glows, tinted
             surfaces, hover animations, styled scrollbars; fixed 7 empty
             avatar slots (emoji list rebuilt with verified codepoints).
+     v1.14→ GLOW-UP v2: animated banner drift + pulsing card glow, staggered
+            pane entrance animations, category icons in nav, online status
+            dots, "SSC 2027" badge chip, Discord-style toggle switch, round
+            ✕ close button, dotted texture backdrop, reduced-motion support.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -811,7 +815,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1825,9 +1829,71 @@
   .upx-up-gear:hover{transform:rotate(40deg);color:var(--accent,#5865f2);}
 </style>
 
-<!-- ==================== UPDATE 1.14 · paste the next section here ====================
-<section class="upx-section" data-version="1.14" id="update-1-14"> … </section>
+<!-- ==================== UPDATE 1.14 · GLOW-UP v2 (MOTION & DETAIL) ==================== -->
+<section class="upx-section" data-version="1.14" id="update-1-14">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.14</span>
+    <h2>Settings glow-up v2 — motion &amp; detail</h2>
+    <ul class="upx-glist">
+      <li><b>Living banner:</b> gradient slowly drifts; profile card breathes with a pulsing accent glow.</li>
+      <li><b>Entrance motion:</b> pane content fades/slides in with a stagger every time you switch category.</li>
+      <li><b>Nav icons</b> per category (👤 🔒 🎨 🎯 📦) + glowing gradient page title.</li>
+      <li><b>Discord details:</b> green online dot on avatars (card + sidebar panel), "SSC 2027" badge chip next to your name, round ✕ close button, real toggle switch for the cards option.</li>
+      <li><b>Texture:</b> faint accent dot-grid on the content area; buttons lift with an accent shadow.</li>
+      <li>Respects <code>prefers-reduced-motion</code> — all animation switches off for sensitive users.</li>
+    </ul>
+    <p class="upx-stamp">CSS-only layer on top of 1.12/1.13 — no behaviour changes.</p>
+  </div>
+</section>
+
+<style>
+  /* ---------- UPDATE 1.14 · motion & detail layer ---------- */
+  @keyframes upxIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  @keyframes upxBanner{0%{background-position:0% 30%}100%{background-position:100% 70%}}
+  @keyframes upxPulse{0%,100%{box-shadow:0 12px 34px color-mix(in srgb,var(--accent,#5865f2) 18%,transparent),0 2px 8px rgba(0,0,0,.18)}50%{box-shadow:0 14px 46px color-mix(in srgb,var(--accent,#5865f2) 36%,transparent),0 2px 8px rgba(0,0,0,.18)}}
+  @keyframes upxBlink{0%,100%{box-shadow:0 0 0 0 rgba(35,197,82,.55)}50%{box-shadow:0 0 0 5px rgba(35,197,82,0)}}
+  #upx-ds .upx-ds-main{background-image:radial-gradient(color-mix(in srgb,var(--accent,#5865f2) 8%,transparent) 1px,transparent 1px);background-size:22px 22px;}
+  #upx-ds .upx-ds-pane > *{animation:upxIn .3s both;}
+  #upx-ds .upx-ds-pane > *:nth-child(2){animation-delay:.04s}
+  #upx-ds .upx-ds-pane > *:nth-child(3){animation-delay:.08s}
+  #upx-ds .upx-ds-pane > *:nth-child(4){animation-delay:.12s}
+  #upx-ds .upx-ds-pane > *:nth-child(5){animation-delay:.16s}
+  #upx-ds .upx-ds-pane > *:nth-child(6){animation-delay:.2s}
+  #upx-ds .upx-ds-pane > *:nth-child(7){animation-delay:.24s}
+  #upx-ds .upx-ds-pane > *:nth-child(8){animation-delay:.28s}
+  #upx-ds .upx-ds-pane > *:nth-child(n+9){animation-delay:.32s}
+  #upx-ds .upx-ds-head h2{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--accent,#5865f2) 45%,transparent));}
+  #upx-ds .upx-ds-close{width:34px;height:34px;padding:0;border-radius:50%;font-size:0;display:flex;align-items:center;justify-content:center;}
+  #upx-ds .upx-ds-close::before{content:'✕';font-size:15px;line-height:1;}
+  #upx-ds .upx-ds-navbtn::before{margin-right:9px;font-size:14px;}
+  #upx-ds .upx-ds-navbtn[data-cat="profile"]::before{content:'👤';}
+  #upx-ds .upx-ds-navbtn[data-cat="account"]::before{content:'🔒';}
+  #upx-ds .upx-ds-navbtn[data-cat="appearance"]::before{content:'🎨';}
+  #upx-ds .upx-ds-navbtn[data-cat="study"]::before{content:'🎯';}
+  #upx-ds .upx-ds-navbtn[data-cat="updates"]::before{content:'📦';}
+  .upx-pcard{animation:upxIn .3s both,upxPulse 4.5s ease-in-out .5s infinite;}
+  .upx-pcard-banner{background-size:180% 180%;animation:upxBanner 8s ease-in-out infinite alternate;}
+  .upx-pcard-ava,.upx-up-ava{position:relative;}
+  .upx-pcard-ava::after,.upx-up-ava::after{content:'';position:absolute;right:1px;bottom:1px;width:13px;height:13px;border-radius:50%;background:#23c552;border:3px solid var(--bg,#0b0c0f);animation:upxBlink 3s ease-out infinite;}
+  .upx-pcard-body b::after{content:'SSC 2027';margin-left:9px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.5px;vertical-align:2px;color:#fff;background:linear-gradient(90deg,var(--accent,#5865f2),color-mix(in srgb,var(--accent,#5865f2) 55%,#ff8fab));box-shadow:0 0 12px color-mix(in srgb,var(--accent,#5865f2) 50%,transparent);}
+  #upx-ds .button{transition:transform .15s,box-shadow .15s,background .15s;}
+  #upx-ds .button:hover{transform:translateY(-1px);box-shadow:0 6px 18px color-mix(in srgb,var(--accent,#5865f2) 35%,transparent);}
+  #upx-ds .upx-ds-pane input[type=text]:hover,#upx-ds .upx-ds-pane input[type=date]:hover,#upx-ds .upx-ds-pane input[type=number]:hover,#upx-ds .upx-ds-pane input[type=password]:hover,#upx-ds .upx-ds-pane textarea:hover{border-color:color-mix(in srgb,var(--accent,#5865f2) 45%,var(--line,#e3e4e8));}
+  #upx-cards-toggle{appearance:none;-webkit-appearance:none;width:42px;height:24px;border-radius:20px;background:var(--line,#e3e4e8);border:1px solid var(--line,#e3e4e8);position:relative;cursor:pointer;transition:background .2s,border-color .2s;flex:none;margin:0;}
+  #upx-cards-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .2s;}
+  #upx-cards-toggle:checked{background:var(--accent,#5865f2);border-color:var(--accent,#5865f2);}
+  #upx-cards-toggle:checked::after{transform:translateX(18px);}
+  .upx-user-panel{transition:box-shadow .2s;}
+  .upx-user-panel:hover{box-shadow:inset 0 1px 0 color-mix(in srgb,var(--accent,#5865f2) 40%,transparent);}
+  @media (prefers-reduced-motion:reduce){
+    #upx-ds .upx-ds-pane > *,.upx-pcard,.upx-pcard-banner,.upx-pcard-ava::after,.upx-up-ava::after{animation:none !important;}
+    #upx-ds .upx-ds-navbtn:hover,.upx-ava-opt:hover,.upx-hex:hover,.upx-ds-mode:hover,.upx-ds-swatch:hover,#upx-ds .button:hover{transform:none !important;}
+  }
+</style>
+
+<!-- ==================== UPDATE 1.15 · paste the next section here ====================
+<section class="upx-section" data-version="1.15" id="update-1-15"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a542d2370d1a4c38',t:'MTc5MzYxOTE3Mg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a542d2370d1a4c38',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a542dc5f6a4bdfbb',t:'MTc5MzYxOTU4OQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a542dc5f6a4bdfbb',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
