@@ -34,6 +34,9 @@
             and a PROFILE SYSTEM: avatar (emoji or upload), banner colour,
             About-me, display name — shown on a Discord-style user panel at
             the bottom of the sidebar and on the profile card in settings.
+     v1.13→ VISUAL GLOW-UP: gradient banners & nav, accent glows, tinted
+            surfaces, hover animations, styled scrollbars; fixed 7 empty
+            avatar slots (emoji list rebuilt with verified codepoints).
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -808,7 +811,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -1474,7 +1477,7 @@
   (function () {
     'use strict';
 
-    var EMOJIS = ['😀', '😎', '🦊', '🐼', '🐯', '', '', '', '🦄', '🐝', '🌸', '', '⭐', '🔥', '', '', '', '✏️', '🧠', ''];
+    var EMOJIS = ['\u{1F600}','\u{1F60E}','\u{1F98A}','\u{1F43C}','\u{1F42F}','\u{1F981}','\u{1F438}','\u{1F419}','\u{1F984}','\u{1F41D}','\u{1F338}','\u{1F319}','\u{2B50}','\u{1F525}','\u{26A1}','\u{1F3A7}','\u{1F4DA}','\u{270F}\u{FE0F}','\u{1F9E0}','\u{1F3AF}'];
     var BANNERS = ['#5865f2', '#286087', '#5d438f', '#9c435c', '#875516', '#48556b', '#9c4b5a', '#1f8b4c'];
     var PALETTES = [
       ['blurple', 'Blurple', '#e1e4ff', '#8391ff', '#5865f2'],
@@ -1767,9 +1770,64 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.13 · paste the next section here ====================
-<section class="upx-section" data-version="1.13" id="update-1-13"> … </section>
+<!-- ==================== UPDATE 1.13 · VISUAL GLOW-UP ==================== -->
+<section class="upx-section" data-version="1.13" id="update-1-13">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.13</span>
+    <h2>Settings glow-up</h2>
+    <ul class="upx-glist">
+      <li>Gradient profile banner with a light bloom; glowing avatar ring; tinted glass card body.</li>
+      <li>Nav sidebar: accent-tinted gradient, glowing selection bar, slide-on-hover items; gradient page title.</li>
+      <li>Inputs &amp; pickers: accent-tinted fields, focus glow rings, hover lift on swatches / emojis / modes.</li>
+      <li>Styled scrollbars + rotating gear hover on the sidebar user panel.</li>
+      <li>Fixed: 7 blank avatar slots replaced with a verified 20-emoji set.</li>
+    </ul>
+    <p class="upx-stamp">Pure CSS layer + emoji fix — no behaviour changes.</p>
+  </div>
+</section>
+
+<style>
+  /* ---------- UPDATE 1.13 · glow-up layer (loads after 1.12, wins cascade) ---------- */
+  #upx-ds{background:var(--bg,#0b0c0f);}
+  #upx-ds .upx-ds-nav{background:var(--bg,#0b0c0f);background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#5865f2) 12%,var(--bg,#0b0c0f)) 0%,color-mix(in srgb,var(--accent,#5865f2) 4%,var(--bg,#0b0c0f)) 55%,var(--bg,#0b0c0f) 100%);border-right:1px solid color-mix(in srgb,var(--accent,#5865f2) 28%,var(--line,#e3e4e8));}
+  #upx-ds .upx-ds-navhead{color:color-mix(in srgb,var(--accent,#5865f2) 75%,var(--muted,#6b7078));font-size:10px;letter-spacing:.9px;}
+  #upx-ds .upx-ds-navbtn{position:relative;transition:background .15s,color .15s,transform .15s;}
+  #upx-ds .upx-ds-navbtn:hover{transform:translateX(3px);background:color-mix(in srgb,var(--accent,#5865f2) 14%,transparent);color:var(--text,#191b1f);}
+  #upx-ds .upx-ds-navbtn.sel{background:linear-gradient(90deg,color-mix(in srgb,var(--accent,#5865f2) 30%,transparent),color-mix(in srgb,var(--accent,#5865f2) 6%,transparent));color:var(--text,#191b1f);}
+  #upx-ds .upx-ds-navbtn.sel::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--accent,#5865f2);box-shadow:0 0 10px color-mix(in srgb,var(--accent,#5865f2) 80%,transparent);}
+  #upx-ds .upx-ds-head h2{background:linear-gradient(90deg,var(--accent,#5865f2),color-mix(in srgb,var(--accent,#5865f2) 45%,var(--text,#191b1f)));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
+  #upx-ds .upx-ds-close{transition:.15s;}
+  #upx-ds .upx-ds-close:hover{color:var(--accent,#5865f2);border-color:var(--accent,#5865f2);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#5865f2) 20%,transparent);}
+  #upx-ds .upx-ds-pane h3{color:var(--accent,#5865f2);border-bottom:1px solid color-mix(in srgb,var(--accent,#5865f2) 30%,var(--line,#e3e4e8));}
+  #upx-ds .upx-ds-pane input[type=text],#upx-ds .upx-ds-pane input[type=date],#upx-ds .upx-ds-pane input[type=number],#upx-ds .upx-ds-pane input[type=password],#upx-ds .upx-ds-pane textarea{background:color-mix(in srgb,var(--accent,#5865f2) 5%,var(--bg,#0b0c0f));border-color:color-mix(in srgb,var(--accent,#5865f2) 24%,var(--line,#e3e4e8));transition:border-color .15s,box-shadow .15s,background .15s;}
+  #upx-ds .upx-ds-pane input[type=text]:focus,#upx-ds .upx-ds-pane input[type=date]:focus,#upx-ds .upx-ds-pane input[type=number]:focus,#upx-ds .upx-ds-pane input[type=password]:focus,#upx-ds .upx-ds-pane textarea:focus{outline:none;border-color:var(--accent,#5865f2);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#5865f2) 22%,transparent);background:color-mix(in srgb,var(--accent,#5865f2) 8%,var(--bg,#0b0c0f));}
+  #upx-ds .upx-ds-pane::-webkit-scrollbar,#upx-ds .upx-ds-nav::-webkit-scrollbar{width:10px;}
+  #upx-ds .upx-ds-pane::-webkit-scrollbar-thumb,#upx-ds .upx-ds-nav::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent,#5865f2) 35%,transparent);border-radius:6px;border:2px solid transparent;background-clip:padding-box;}
+  #upx-ds .upx-ds-pane::-webkit-scrollbar-thumb:hover,#upx-ds .upx-ds-nav::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--accent,#5865f2) 60%,transparent);background-clip:padding-box;}
+  .upx-pcard{border:1px solid color-mix(in srgb,var(--accent,#5865f2) 38%,var(--line,#e3e4e8));border-radius:14px;box-shadow:0 12px 34px color-mix(in srgb,var(--accent,#5865f2) 20%,transparent),0 2px 8px rgba(0,0,0,.18);}
+  .upx-pcard-banner{background:var(--upx-banner,#5865f2);background-image:radial-gradient(120% 100% at 88% -20%,rgba(255,255,255,.42),rgba(255,255,255,0) 55%),linear-gradient(135deg,var(--upx-banner,#5865f2) 0%,color-mix(in srgb,var(--upx-banner,#5865f2) 62%,var(--accent,#5865f2)) 70%,color-mix(in srgb,var(--upx-banner,#5865f2) 38%,var(--accent,#5865f2)) 100%);}
+  .upx-pcard-body{background:color-mix(in srgb,var(--accent,#5865f2) 9%,var(--bg,#0b0c0f));}
+  .upx-pcard-ava{border-color:var(--bg,#0b0c0f);box-shadow:0 0 0 3px var(--accent,#5865f2),0 0 18px color-mix(in srgb,var(--accent,#5865f2) 55%,transparent),0 8px 20px rgba(0,0,0,.35);}
+  .upx-pcard-body b{font-size:17px;letter-spacing:.2px;}
+  .upx-pcard-about{background:color-mix(in srgb,var(--accent,#5865f2) 6%,var(--bg,#0b0c0f));border-color:color-mix(in srgb,var(--accent,#5865f2) 22%,var(--line,#e3e4e8));}
+  .upx-ava-opt{background:color-mix(in srgb,var(--accent,#5865f2) 6%,var(--bg,#0b0c0f));transition:transform .12s,border-color .12s,box-shadow .12s;}
+  .upx-ava-opt:hover{transform:scale(1.14);border-color:var(--accent,#5865f2);}
+  .upx-ava-opt.sel{border-color:var(--accent,#5865f2);box-shadow:0 0 0 2px var(--accent,#5865f2),0 0 14px color-mix(in srgb,var(--accent,#5865f2) 60%,transparent);}
+  .upx-hex{border-radius:10px;transition:transform .12s,box-shadow .12s;}
+  .upx-hex:hover{transform:scale(1.12);}
+  .upx-hex.sel{outline:2px solid var(--accent,#5865f2);outline-offset:2px;box-shadow:0 0 14px color-mix(in srgb,var(--accent,#5865f2) 55%,transparent);}
+  .upx-ds-mode,.upx-ds-swatch{transition:transform .12s,box-shadow .12s,border-color .12s;}
+  .upx-ds-mode:hover,.upx-ds-swatch:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.22);border-color:color-mix(in srgb,var(--accent,#5865f2) 45%,var(--line,#e3e4e8));}
+  .upx-ds-mode.sel,.upx-ds-swatch.sel{border-color:var(--accent,#5865f2);box-shadow:0 0 0 1px var(--accent,#5865f2),0 0 14px color-mix(in srgb,var(--accent,#5865f2) 40%,transparent);}
+  .upx-user-panel{background:linear-gradient(90deg,color-mix(in srgb,var(--accent,#5865f2) 18%,var(--bg,#0b0c0f)),color-mix(in srgb,var(--accent,#5865f2) 6%,var(--bg,#0b0c0f)));border-top:1px solid color-mix(in srgb,var(--accent,#5865f2) 32%,var(--line,#e3e4e8));}
+  .upx-up-ava{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#5865f2) 75%,transparent),0 0 12px color-mix(in srgb,var(--accent,#5865f2) 45%,transparent);}
+  .upx-up-gear{transition:transform .25s,color .15s;}
+  .upx-up-gear:hover{transform:rotate(40deg);color:var(--accent,#5865f2);}
+</style>
+
+<!-- ==================== UPDATE 1.14 · paste the next section here ====================
+<section class="upx-section" data-version="1.14" id="update-1-14"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a542c723d89f7ccd',t:'MTc5MzYxODcxOQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a542c723d89f7ccd',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a542d2370d1a4c38',t:'MTc5MzYxOTE3Mg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a542d2370d1a4c38',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
