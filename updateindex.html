@@ -62,6 +62,10 @@
             profiles.last_seen; green pulsing dot + "Online now" / "Last seen
             2h ago" on profile popups, dot per leaderboard row, own panel dot.
             Requires supabase-migration-1.18.sql.
+     v1.19→ CURRICULUM AUDIT INJECTION: 87 verified NCTB-audit topics appended
+            (Wave 1: Chemistry/Physics/Biology/Math/Higher-Math · Wave 2:
+            English 1st-2nd, Bangla 2nd +2 নির্মিতি chapters, BGS +এসডিজি chapter,
+            ICT, Islam). Append-only — existing IDs untouched, no migration.
             • verifies app DATA against the NCTB book contents you OCR'd
             • auto-fixes wrong titles/authors + inserts the missing poem
               (রানার) at runtime — index.html still never rewritten
@@ -836,7 +840,7 @@
 
     var CARD_KEY = 'upxShowCards';
     var TAB_KEY  = 'upxAuthTabChosen';
-    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14', 'update-1-15', 'update-1-16', 'update-1-17', 'update-1-18'];
+    var CARD_IDS = ['update-1-2', 'update-1-3', 'update-1-4', 'update-1-5', 'update-1-6', 'update-1-7', 'update-1-8', 'update-1-9', 'update-1-10', 'update-1-11', 'update-1-12', 'update-1-13', 'update-1-14', 'update-1-15', 'update-1-16', 'update-1-17', 'update-1-18', 'update-1-19'];
 
     function cardsWanted() {
       try { return localStorage.getItem(CARD_KEY) === '1'; } catch (e) { return false; }
@@ -2623,9 +2627,65 @@
   })();
 </script>
 
-<!-- ==================== UPDATE 1.19 · paste the next section here ====================
-<section class="upx-section" data-version="1.19" id="update-1-19"> … </section>
+<!-- ==================== UPDATE 1.19 · CURRICULUM AUDIT INJECTION (87 TOPICS) ==================== -->
+<section class="upx-section" data-version="1.19" id="update-1-19">
+  <div class="upx-card">
+    <span class="upx-badge">UPDATE 1.19</span>
+    <h2>Curriculum macro-audit injection — 87 verified topics</h2>
+    <ul class="upx-glist">
+      <li><b>Wave 1 (60):</b> Chemistry +13 (Limiting Reactant family, titration, corrosion, isomerism, practicals) · Physics +13 (electricity bill, v–t graph area, heating curves, motor/generator, concept-only অর্ধায়ু, practicals) · Biology +23 (reflex arc, Mendel, osmosis, clotting, sense organs…) · Math +5 · Higher Math +6 (symmetric roots, permutation, perpendicular distance…)</li>
+      <li><b>Wave 2 Batch 1 (12):</b> English 1st +2 (context clues, inference) · English 2nd +3 (Narration, CV+cover letter, Graphs &amp; Charts) · Bangla 2nd +7 via NEW chapters <b>অনুবাদ</b> ও <b>প্রায়োগিক ও কল্পনানির্ভর লিখন</b></li>
+      <li><b>Wave 2 Batch 2 (15):</b> BGS +6 (গণহত্যা, সংবিধানের মূলনীতি, NEW <b>এসডিজি</b> chapter) · ICT +5 (cyberbullying, $-cell references, IF/functions, file formats, cloud) · Islam +4 (আসমাউল হুসনা, জিহাদ, ওয়াদা পালন-মানবসেবা, বিদায় হুতবা)</li>
+      <li><b>Append-only:</b> existing topic/chapter IDs untouched — saved progress, ratings and Supabase sync keys unaffected; new topics start unchecked.</li>
+      <li><b>Pruned items excluded:</b> % yield &amp; M₁V₁=M₂V₂ drills (HSC), half-life numerics (concept-only), ICT Database/HTML/arrays, ইসলামে সহমর্মিতা/মুয়ামালাত chapters.</li>
+    </ul>
+    <p class="upx-stamp">No Supabase migration · no index.html change · payload: 76 topics into existing chapters + 3 new chapters (11 topics).</p>
+  </div>
+</section>
+
+<script>
+  /* ---------- UPDATE 1.19 · curriculum audit injection (append-only DATA patcher) ---------- */
+  (function () {
+    'use strict';
+    var AUDIT19 = {"topics":{"physics-1":[{"id":"physics-1-t8","title":"ভার্নিয়ার ও স্ক্রু গজের শূন্য ত্রুটি নির্ণয় ও সংশোধন","examType":"both"}],"physics-2":[{"id":"physics-2-t9","title":"বেগ-সময় লেখচিত্রের নিচের ক্ষেত্রফল থেকে সরণ নির্ণয়","examType":"both"}],"physics-3":[{"id":"physics-3-t10","title":"মুক্তচিত্র (Free-body Diagram) অঙ্কন ও সাম্যাবস্থার গণনা","examType":"cq"},{"id":"physics-3-t9","title":"ঘাত (Impulse) ও ভরবেগের পরিবর্তন সংক্রান্ত গণনা","examType":"both"}],"physics-6":[{"id":"physics-6-t8","title":"উত্তাপন ও শীতলীকরণ বক্ররেখা বিশ্লেষণ (অবস্থার পরিবর্তনসহ)","examType":"both"}],"physics-11":[{"id":"physics-11-t9","title":"বিদ্যুৎ বিল ও ইউনিট খরচের গাণিতিক সমস্যা","examType":"both"}],"physics-12":[{"id":"physics-12-t7","title":"তড়িৎ মোটর ও জেনারেটর: নীতি, গঠন ও ব্যবহার","examType":"both"},{"id":"physics-12-t8","title":"একমুখী (DC) ও পরিবর্তী (AC) প্রবাহের পার্থক্য","examType":"mcq"}],"physics-13":[{"id":"physics-13-t9","title":"অর্ধায়ুর ধারণা","examType":"mcq"}],"physics-practical":[{"id":"physics-14-t10","title":"ব্যবহারিক: উত্তল লেন্স/দর্পণের ফোকাস দূরত্ব নির্ণয়","examType":"both"},{"id":"physics-14-t11","title":"ব্যবহারিক: ক্যালোরিমিটি পদ্ধতিতে আপেক্ষিক তাপ নির্ণয়","examType":"both"},{"id":"physics-14-t8","title":"ব্যবহারিক: সরল দোলক পদ্ধতিতে অভিকর্ষজ ত্বরণ g নির্ণয়","examType":"both"},{"id":"physics-14-t9","title":"ব্যবহারিক: ওহমের সূত্র যাচাই ও V-I লেখচিত্র অঙ্কন","examType":"both"}],"chemistry-6":[{"id":"chemistry-6-t10","title":"সীমাবদ্ধকারী বিকারক (Limiting Reactant) শনাক্তকরণ","examType":"both"},{"id":"chemistry-6-t11","title":"অতিরিক্ত বিকারকের অবশিষ্ট ভর নির্ণয়","examType":"cq"},{"id":"chemistry-6-t12","title":"ppm ও শতকরা (w/w, w/v) এককে ঘনমাত্রা প্রকাশ","examType":"mcq"}],"chemistry-7":[{"id":"chemistry-7-t9","title":"ধাতুর সক্রিয়তা সিরিজ ও প্রতিস্থাপন বিক্রিয়ায় এর প্রয়োগ","examType":"both"}],"chemistry-9":[{"id":"chemistry-9-t10","title":"এসিড-ক্ষার টাইট্রেশন ও গাণিতিক সমস্যা (W=SVM/1000)","examType":"cq"},{"id":"chemistry-9-t11","title":"অক্সাইডের শ্রেণিবিন্যাস: এসিডীয়, ক্ষারীয়, উভধর্মী ও নিরপেক্ষ","examType":"mcq"},{"id":"chemistry-9-t12","title":"এসিড ও ক্ষারকের তীব্রতা এবং লবণের শ্রেণিবিন্যাস","examType":"mcq"},{"id":"chemistry-9-t9","title":"প্রশমন বিক্রিয়া ও দৈনন্দিন জীবনে প্রয়োগ","examType":"both"}],"chemistry-10":[{"id":"chemistry-10-t10","title":"অ্যালুমিনিয়াম ও তামার গুরুত্বপূর্ণ ব্যবহার","examType":"mcq"},{"id":"chemistry-10-t9","title":"ধাতব ক্ষয় ও মরিচা পড়া: কারণ, প্রতিকার ও প্রতিরোধ (গ্যালভানাইজিং)","examType":"both"}],"chemistry-11":[{"id":"chemistry-11-t10","title":"সমাণুতা (Isomerism) ও গাঠনিক সমানু","examType":"both"}],"chemistry-practical":[{"id":"chemistry-13-t8","title":"ব্যবহারিক: এসিড-ক্ষার টাইট্রেশন পরীক্ষা","examType":"both"},{"id":"chemistry-13-t9","title":"ব্যবহারিক: লবণের গুণগত বিশ্লেষণ (মূলক শনাক্তকরণ)","examType":"both"}],"biology-2":[{"id":"biology-2-t10","title":"প্লাসমোলাইসিস ও স্ফীতি চাপ (টর্গর প্রেশার)","examType":"both"},{"id":"biology-2-t11","title":"কোষতত্ত্ব (Cell Theory) ও এর ইতিহাস","examType":"mcq"},{"id":"biology-2-t9","title":"অভিস্রবণ ও ব্যাপন: ধারণা, পরীক্ষা ও গুরুত্ব","examType":"both"}],"biology-3":[{"id":"biology-3-t9","title":"মাইটোসিস ও মিয়োসিসের বিভিন্ন পর্যায়ের চিত্র শনাক্তকরণ","examType":"cq"}],"biology-4":[{"id":"biology-4-t9","title":"রাসায়নসংশ্লেষণ (Chemosynthesis) ধারণা ও রাসায়নসংশ্লেষী জীব","examType":"mcq"}],"biology-5":[{"id":"biology-5-t14","title":"এনজাইমের বৈশিষ্ট্য এবং তাপমাত্রা ও pH-এর প্রভাব (পরীক্ষাসহ)","examType":"both"}],"biology-6":[{"id":"biology-6-t10","title":"ফুসফুসীয় ও দেহীয় রক্ত সঞ্চালন পথ","examType":"both"},{"id":"biology-6-t11","title":"রক্ত জমাট বাঁধার প্রক্রিয়া","examType":"mcq"}],"biology-7":[{"id":"biology-7-t9","title":"গ্রহণকৃত ও নিঃশ্বাসিত বায়ুর উপাদানের তুলনা","examType":"mcq"}],"biology-8":[{"id":"biology-8-t8","title":"রেচনে ত্বক (ঘর্মগ্রন্থি) ও ফুসফুসের ভূমিকা","examType":"mcq"}],"biology-9":[{"id":"biology-9-t8","title":"চলনে পেশির প্রতিদ্বন্দ্বী ক্রিয়া (প্রসারক-সংকোচক পেশি)","examType":"both"}],"biology-10":[{"id":"biology-10-t10","title":"প্রতিক্ষেপ ক্রিয়া (Reflex Action) ও প্রতিবর্তী চাপ","examType":"both"},{"id":"biology-10-t11","title":"মস্তিষ্কের অংশসমূহের গঠন ও কাজ (প্রমস্তিষ্ক, অনুমস্তিষ্ক, মেডুলা)","examType":"both"},{"id":"biology-10-t12","title":"চোখ ও কান: গঠন ও অনুভূতি গ্রহণের প্রক্রিয়া","examType":"both"},{"id":"biology-10-t13","title":"ডায়াবেটিস: কারণ, লক্ষণ, প্রতিরোধ ও করণীয়","examType":"both"}],"biology-11":[{"id":"biology-11-t9","title":"স্রাবী চক্র (Menstrual Cycle) ও ডিম্বস্ফোটন","examType":"both"}],"biology-12":[{"id":"biology-12-t10","title":"DNA-এর গঠন: দ্বি-হেলিক্স, নিউক্লিওটাইড ও বেস জোড়","examType":"mcq"},{"id":"biology-12-t9","title":"মেন্ডেলের সূত্র ও এক সংকর জনু (৩:১ অনুপাতের গণনা)","examType":"cq"}],"biology-13":[{"id":"biology-13-t9","title":"জীবভূ-রাসায়নিক চক্র: কার্বন ও নাইট্রোজেন চক্র","examType":"both"}],"biology-14":[{"id":"biology-14-t9","title":"টিকা ও ইমিউনাইজেশন: প্রকারভেদ ও গুরুত্ব","examType":"both"}],"biology-practical":[{"id":"biology-15-t10","title":"ব্যবহারিক: সালোকসংশ্লেষণে শর্করা উপস্থিতির পরীক্ষা","examType":"both"},{"id":"biology-15-t8","title":"ব্যবহারিক: অণুবীক্ষণ যন্ত্রে কোষ পর্যবেক্ষণ ও চিত্র অঙ্কন","examType":"both"},{"id":"biology-15-t9","title":"ব্যবহারিক: প্লাসমোলাইসিস পরীক্ষা","examType":"both"}],"math-2":[{"id":"math-2-t7","title":"সেট সূত্র n(A∪B)=n(A)+n(B)−n(A∩B) ও বাস্তব সমস্যা","examType":"both"}],"math-5":[{"id":"math-5-t8","title":"দ্বিঘাত সমীকরণের মূলের প্রকৃতি ও মূল দ্বারা সমীকরণ গঠন","examType":"cq"}],"math-6":[{"id":"math-6-t7","title":"চতুর্ভুজের শ্রেণিবিন্যাস, ধর্মাবলি ও সংক্রান্ত উপপাদ্য","examType":"both"}],"math-12":[{"id":"math-12-t7","title":"ভগ্নাংশযুক্ত ও বিশেষ আকারের সহসমীকরণ সমাধান","examType":"cq"}],"math-17":[{"id":"math-17-t9","title":"অজিভ রেখা থেকে মধ্যক ও প্রচুরক নির্ণয়","examType":"both"}],"higher-math-2":[{"id":"higher-math-2-t7","title":"অনির্ণেয় সহগ পদ্ধতি (Method of Undetermined Coefficients)","examType":"cq"}],"higher-math-5":[{"id":"higher-math-5-t7","title":"মূলদ্বয়ের প্রতিসম রাশির মান নির্ণয় (α²+β², 1/α+1/β ইত্যাদি)","examType":"cq"}],"higher-math-8":[{"id":"higher-math-8-t8","title":"ত্রিকোণমিতিক ফাংশনের লেখচিত্র: পর্যায়কাল ও বিস্তার","examType":"both"},{"id":"higher-math-8-t9","title":"সরল ত্রিকোণমিতিক সমীকরণ সমাধান","examType":"cq"}],"higher-math-10":[{"id":"higher-math-10-t7","title":"বিন্যাস (Permutation): মৌলিক ধারণা ও সমস্যা","examType":"both"}],"higher-math-11":[{"id":"higher-math-11-t8","title":"বিন্দু থেকে সরলরেখার লম্ব দূরত্ব নির্ণয়","examType":"both"}],"english-1-17":[{"id":"english-1-17-t6","title":"প্রাসঙ্গিক সূত্র ধরে অজানা শব্দের অর্থ অনুমান (Guessing meaning from context)","examType":"both"},{"id":"english-1-17-t7","title":"অন্তর্নিহিত অর্থ ও অনুমাননির্ভর প্রশ্নের উত্তর (Inference & implied meaning)","examType":"cq"}],"english-2-8":[{"id":"english-2-8-t7","title":"Direct ও Indirect Speech (Narration): রূপান্তরের নিয়ম ও অনুশীলন","examType":"cq"}],"english-2-14":[{"id":"english-2-14-t7","title":"Cover letter সহ Curriculum Vitae (CV) লিখন","examType":"cq"}],"english-2-15":[{"id":"english-2-15-t8","title":"লেখচিত্র ও ছক বর্ণনা (Describing Graphs & Charts)","examType":"cq"}],"bgs-2":[{"id":"bgs-2-t8","title":"১৯৭১-এর গণহত্যা ও বুদ্ধিজীবী হত্যা","examType":"both"}],"bgs-6":[{"id":"bgs-6-t8","title":"বাংলাদেশের সংবিধানের মূলনীতিসমূহ ও তাদের তাৎপর্য","examType":"cq"}],"islam-1":[{"id":"islam-1-t8","title":"আসমাউল হুসনা: ধারণা ও মানবজীবনে প্রভাব","examType":"both"}],"islam-3":[{"id":"islam-3-t9","title":"জিহাদের ধারণা ও ছাত্রজীবনে এর প্রয়োগ","examType":"both"}],"islam-4":[{"id":"islam-4-t9","title":"ওয়াদা পালন ও মানবসেবা","examType":"both"}],"islam-5":[{"id":"islam-5-t7","title":"বিদায় হুতবার শিক্ষা ও বর্তমান প্রেক্ষাপটে প্রাসঙ্গিকতা","examType":"cq"}],"ict-1":[{"id":"ict-1-t7","title":"ক্লাউড কম্পিউটিংয়ের ধারণা ও দৈনন্দিন জীবনে ব্যবহার","examType":"mcq"}],"ict-2":[{"id":"ict-2-t9","title":"সাইবার বুলিং: প্রকারভেদ, প্রভাব, প্রতিকার ও আইনি বিধান","examType":"both"}],"ict-4":[{"id":"ict-4-t10","title":"IF ও অন্যান্য বহুল ব্যবহৃত ফাংশন (MAX, MIN, COUNT) — ব্যবহারিক সমস্যা","examType":"both"},{"id":"ict-4-t9","title":"আপেক্ষিক, পরম ও মিশ্র সেল রেফারেন্স এবং সূত্রে প্রয়োগ","examType":"both"}],"ict-5":[{"id":"ict-5-t9","title":"মাল্টিমিডিয়া ফাইল ফরম্যাট ও কম্প্রেশন (ছবি, অডিও, ভিডিও)","examType":"both"}]},"chapters":{"bangla-2":[{"id":"bangla-2-50","title":"অনুবাদ (Translation)","bn":"নির্মিতি","section":"Writing · নির্মিতি","topics":[{"id":"bangla-2-50-t1","title":"অনুবাদের নীতি, প্রকারভেদ ও কৌশল","examType":"both"},{"id":"bangla-2-50-t2","title":"পারিভাষিক শব্দের সঠিক প্রতিশব্দ নির্বাচন","examType":"mcq"},{"id":"bangla-2-50-t3","title":"অনুচ্ছেদ অনুবাদ অনুশীলন (ইংরেজি ⇄ বাংলা)","examType":"cq"}]},{"id":"bangla-2-51","title":"প্রায়োগিক ও কল্পনানির্ভর লিখন (Applied & Imaginative Writing)","bn":"নির্মিতি","section":"Writing · নির্মিতি","topics":[{"id":"bangla-2-51-t1","title":"দিনলিপি লিখন: গঠন ও ভাষারীতি","examType":"both"},{"id":"bangla-2-51-t2","title":"সংলাপ রচনা: গঠন, ভাষা ও বিষয়ভিত্তিক অনুশীলন","examType":"both"},{"id":"bangla-2-51-t3","title":"খুদে গল্প রচনা: প্লট, চরিত্র ও সমাপ্তি","examType":"cq"},{"id":"bangla-2-51-t4","title":"সময় ধরে প্রায়োগিক ও কল্পনানির্ভর লিখন অনুশীলন","examType":"both"}]}],"bgs":[{"id":"bgs-16","title":"Sustainable Development Goals (SDGs)","bn":"টেকসই উন্নয়ন অভীষ্ট (এসডিজি)","section":"Chapters","topics":[{"id":"bgs-16-t1","title":"এসডিজির ধারণা, ইতিহাস ও ১৭টি লক্ষ্য পরিচিতি","examType":"both"},{"id":"bgs-16-t2","title":"এসডিজি অর্জনে অংশীদারিত্বের গুরুত্ব","examType":"both"},{"id":"bgs-16-t3","title":"এসডিজি অর্জনের সম্ভাব্য ফলাফল","examType":"mcq"},{"id":"bgs-16-t4","title":"এসডিজি অর্জনে বাংলাদেশের চ্যালেঞ্জ ও করণীয়","examType":"cq"}]}]}};
+
+    function apply() {
+      var added = 0;
+      if (typeof DATA === 'undefined' || !DATA || !DATA.forEach) return added;
+      DATA.forEach(function (s) {
+        if (!s || !s.chapters) return;
+        s.chapters.forEach(function (c) {
+          if (!c || !c.topics) return;
+          var inj = AUDIT19.topics[c.id];
+          if (!inj) return;
+          inj.forEach(function (t) {
+            var has = false;
+            for (var i = 0; i < c.topics.length; i++) { if (c.topics[i].id === t.id) { has = true; break; } }
+            if (!has) { c.topics.push({ id: t.id, title: t.title, examType: t.examType }); added++; }
+          });
+        });
+        var ncs = AUDIT19.chapters[s.id];
+        if (ncs) ncs.forEach(function (nc) {
+          var has = false;
+          for (var i = 0; i < s.chapters.length; i++) { if (s.chapters[i].id === nc.id) { has = true; break; } }
+          if (!has) { s.chapters.push(nc); added += nc.topics.length; }
+        });
+      });
+      return added;
+    }
+
+    var n = 0;
+    try {
+      n = apply();
+      if (n > 0 && typeof render === 'function') { try { render(true); } catch (e) {} }
+    } catch (e) { console.warn('[audit-1.19] injection failed:', e && e.message); }
+    window.SSC_AUDIT19 = { payload: AUDIT19, apply: apply, injected: n };
+    console.info('[audit-1.19] curriculum injection: ' + n + ' new topics/chapters applied (append-only)');
+  })();
+</script>
+
+<!-- ==================== UPDATE 1.20 · paste the next section here ====================
+<section class="upx-section" data-version="1.20" id="update-1-20"> … </section>
 <style> … upx- prefixed CSS … </style>
 <script> … JS … </script>
 =================================================================================== -->
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a54513a2fddc7e66',t:'MTc5MzY0MjgyNA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a54513a2fddc7e66',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
